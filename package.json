@@ -1,0 +1,27 @@
+{
+  "name": "cinepick-app",
+  "version": "1.0.0",
+  "description": "CinePick - Movie Picker App",
+  "scripts": {
+    "start": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm run dev",
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "date-fns": "^4.1.0",
+    "framer-motion": "^12.23.24",
+    "mongoose": "^9.0.0",
+    "react-beautiful-dnd": "^13.1.1",
+    "react-calendar-heatmap": "^1.10.0",
+    "react-hot-toast": "^2.6.0",
+    "react-select": "^5.10.2",
+    "recharts": "^3.5.0"
+  }
+}

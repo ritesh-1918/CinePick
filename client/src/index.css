@@ -1,0 +1,40 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@keyframes fadeOutLabel {
+    0% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+
+    70% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateX(0.5rem) scale(0.95);
+    }
+}
+
+
+@layer base {
+    body {
+        font-family: 'Outfit', sans-serif;
+        background-color: black;
+        color: white;
+    }
+}
+
+@keyframes gradient {
+
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+}
