@@ -13,6 +13,7 @@ import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
 import Library from './pages/Library';
 import Discovery from './pages/Discovery';
+import TrailerPage from './pages/TrailerPage';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -56,6 +57,11 @@ function App() {
                     <Route path="/library" element={
                         <ProtectedRoute>
                             <Library />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/trailer/:movieId" element={
+                        <ProtectedRoute>
+                            <TrailerPage />
                         </ProtectedRoute>
                     } />
                     <Route path="/discovery" element={

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,6 +10,7 @@ import ReviewsTab from '@/components/profile/ReviewsTab';
 import PreferencesTab from '@/components/profile/PreferencesTab';
 import SettingsTab from '@/components/profile/SettingsTab';
 import { Loader2, ArrowLeft } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface ProfileData {
     _id: string;
@@ -27,7 +28,7 @@ interface ProfileData {
 }
 
 export default function Profile() {
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('overview');
     const [loading, setLoading] = useState(true);
@@ -44,8 +45,12 @@ export default function Profile() {
                     }
                 });
                 const data = await res.json();
-                if (data.success) {
-                    setProfileData(data.user);
+                if (data.success && data.data) {
+                    setProfileData(data.data.user);
+                    // Update auth context if profile image changed
+                    if (data.data.user.profileImage && data.data.user.profileImage !== user.profileImage) {
+                        updateUser({ profileImage: data.data.user.profileImage });
+                    }
                 }
             } catch (error) {
                 console.error('Failed to fetch profile:', error);
@@ -57,7 +62,7 @@ export default function Profile() {
         if (user) {
             fetchProfile();
         }
-    }, [user]);
+    }, [user, updateUser]);
 
     if (loading) {
         return (
@@ -98,8 +103,16 @@ export default function Profile() {
                                     const file = e.target.files?.[0];
                                     if (!file) return;
 
+                                    // Validate file size (max 5MB)
+                                    if (file.size > 5 * 1024 * 1024) {
+                                        toast.error('Image must be less than 5MB');
+                                        return;
+                                    }
+
                                     const formData = new FormData();
                                     formData.append('avatar', file);
+
+                                    const toastId = toast.loading('Uploading profile picture...');
 
                                     try {
                                         const res = await fetch('http://localhost:5000/api/profile/avatar', {
@@ -110,12 +123,20 @@ export default function Profile() {
                                             body: formData
                                         });
                                         const data = await res.json();
+
                                         if (data.success && profileData) {
-                                            setProfileData({ ...profileData, profileImage: data.fileUrl });
-                                            // toast.success('Profile picture updated'); // Assuming toast is available or add it
+                                            const newImageUrl = data.fileUrl;
+                                            // Update local profile data
+                                            setProfileData({ ...profileData, profileImage: newImageUrl });
+                                            // Update auth context - THIS IS KEY!
+                                            updateUser({ profileImage: newImageUrl });
+                                            toast.success('Profile picture updated!', { id: toastId });
+                                        } else {
+                                            toast.error(data.message || 'Failed to upload image', { id: toastId });
                                         }
-                                    } catch (error) {
+                                    } catch (error: any) {
                                         console.error('Upload failed:', error);
+                                        toast.error('Upload failed. Please try again.', { id: toastId });
                                     }
                                 }}
                             />

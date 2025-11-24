@@ -4,6 +4,8 @@ const cors = require('cors');
 const axios = require('axios');
 const cookieParser = require('cookie-parser');
 const connectDB = require('./config/database');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,7 +20,13 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
-app.use('/uploads', express.static('uploads'));
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir);
+}
+app.use('/uploads', express.static(uploadsDir));
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
@@ -30,6 +38,8 @@ app.use('/api/profile', require('./routes/profile'));
 app.use('/api/watchlist', require('./routes/watchlist'));
 app.use('/api/history', require('./routes/history'));
 app.use('/api/reviews', require('./routes/reviews'));
+app.use('/api/ai', require('./routes/ai'));
+app.use('/api/session', require('./routes/session'));
 
 // Cache Store
 let newsCache = {

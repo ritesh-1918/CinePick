@@ -6,8 +6,23 @@ interface Message {
     content: string;
 }
 
-export default function Chatbot() {
-    const [isOpen, setIsOpen] = useState(false);
+interface ChatbotProps {
+    isOpen?: boolean;
+    onToggle?: (isOpen: boolean) => void;
+}
+
+export default function Chatbot({ isOpen: externalIsOpen, onToggle }: ChatbotProps) {
+    const [internalIsOpen, setInternalIsOpen] = useState(false);
+
+    const isChatOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+
+    const toggleChat = (value: boolean) => {
+        if (onToggle) {
+            onToggle(value);
+        } else {
+            setInternalIsOpen(value);
+        }
+    };
     const [messages, setMessages] = useState<Message[]>([
         { role: 'assistant', content: 'Hi! I\'m CinePick Assistant. How can I help you today?' }
     ]);
@@ -62,17 +77,18 @@ export default function Chatbot() {
     };
 
     const quickQuestions = [
-        "How do I save a movie?",
-        "What features does CinePick have?",
-        "Recommend me action movies"
+        "🎬 Recommend a movie for tonight",
+        "🔥 Show me trending action movies",
+        "😂 I need a good comedy",
+        "🧠 Mind-bending thrillers please"
     ];
 
     return (
         <>
             {/* Chat Button */}
-            {!isOpen && (
+            {!isChatOpen && (
                 <button
-                    onClick={() => setIsOpen(true)}
+                    onClick={() => toggleChat(true)}
                     className="fixed bottom-8 right-8 p-4 bg-gradient-to-r from-primary to-purple-600 text-white rounded-full shadow-2xl hover:shadow-primary/50 transition-all hover:scale-110 z-50 group"
                 >
                     <MessageCircle size={28} />
@@ -81,7 +97,7 @@ export default function Chatbot() {
             )}
 
             {/* Chat Window */}
-            {isOpen && (
+            {isChatOpen && (
                 <div className="fixed bottom-8 right-8 w-[400px] h-[600px] bg-gray-900 border border-white/20 rounded-2xl shadow-2xl flex flex-col z-50 animate-in slide-in-from-bottom-8 duration-300">
                     {/* Header */}
                     <div className="flex items-center justify-between p-4 border-b border-white/20 bg-gradient-to-r from-primary/20 to-purple-600/20 rounded-t-2xl">
@@ -95,7 +111,7 @@ export default function Chatbot() {
                             </div>
                         </div>
                         <button
-                            onClick={() => setIsOpen(false)}
+                            onClick={() => toggleChat(false)}
                             className="p-2 hover:bg-white/10 rounded-lg transition-colors"
                         >
                             <X size={20} className="text-gray-300" />
@@ -107,8 +123,8 @@ export default function Chatbot() {
                         {messages.map((msg, i) => (
                             <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${msg.role === 'user'
-                                        ? 'bg-primary text-white'
-                                        : 'bg-gray-800 text-gray-100 border border-white/20'
+                                    ? 'bg-primary text-white'
+                                    : 'bg-gray-800 text-gray-100 border border-white/20'
                                     }`}>
                                     <p className="text-sm leading-relaxed">{msg.content}</p>
                                 </div>

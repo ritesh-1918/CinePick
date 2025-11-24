@@ -1,270 +1,451 @@
-import React, { useState, useEffect } from 'react';
-import { Play, Search, Send, Sparkles, Loader2, Film, List } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { Smile, Frown, Zap, Clock, Calendar, Users, Heart, User, Film, Sparkles, Moon, Sun, Coffee, Layers, Tv, Music } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import Navbar from '@/components/Navbar';
 import Chatbot from '@/components/Chatbot';
-
-interface MovieRecommendation {
-    title: string;
-    year: string;
-    director: string;
-    reason: string;
-    poster_query: string;
-}
+import DiscoveryHero from '@/components/dashboard/DiscoveryHero';
+import CuratedSection from '@/components/dashboard/CuratedSection';
+import InteractiveCategory from '@/components/dashboard/InteractiveCategory';
+import DecisionFilter from '@/components/dashboard/DecisionFilter';
+import PickForMeButton from '@/components/features/PickForMeButton';
+import AIConversationWizard from '@/components/features/AIConversationWizard';
+import SwipeEliminator from '@/components/features/SwipeEliminator';
+import WatchParty from '@/components/features/WatchParty';
+import MoodPlaylistGenerator from '@/components/features/MoodPlaylistGenerator';
+import MovieDetailModal from '@/components/modals/MovieDetailModal';
+import tmdbApi, { Movie } from '@/services/tmdb';
+import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Dashboard() {
-    const { user, logout } = useAuth();
+    const { user } = useAuth();
     const navigate = useNavigate();
-    const [prompt, setPrompt] = useState('');
+    const categoriesRef = useRef<HTMLDivElement>(null);
+
+    // State
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [isWizardOpen, setIsWizardOpen] = useState(false);
+    const [isSwipeOpen, setIsSwipeOpen] = useState(false);
+    const [isWatchPartyOpen, setIsWatchPartyOpen] = useState(false);
+    const [isPlaylistOpen, setIsPlaylistOpen] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [recommendations, setRecommendations] = useState<MovieRecommendation[]>([]);
-    const [hasSearched, setHasSearched] = useState(false);
-    const [profileImage, setProfileImage] = useState<string | null>(null);
 
-    // Fetch user profile image
+    // Decision Fatigue State
+    const [interactionCount, setInteractionCount] = useState(0);
+    const [showFatiguePopup, setShowFatiguePopup] = useState(false);
+
+    // Time-Aware State
+    const [timeGreeting, setTimeGreeting] = useState('');
+    const [timeIcon, setTimeIcon] = useState<any>(Sun);
+
+    // Category Selection State
+    const [selectedMood, setSelectedMood] = useState<string | null>(null);
+    const [selectedTime, setSelectedTime] = useState<string | null>(null);
+    const [selectedAudience, setSelectedAudience] = useState<string | null>(null);
+
+    // Movies Data State
+    const [moodMovies, setMoodMovies] = useState<Movie[]>([]);
+    const [timeMovies, setTimeMovies] = useState<Movie[]>([]);
+    const [audienceMovies, setAudienceMovies] = useState<Movie[]>([]);
+
+    // Modal State
+    const [detailMovieId, setDetailMovieId] = useState<number | null>(null);
+
+    // Time-Aware Logic
     useEffect(() => {
-        const fetchProfileImage = async () => {
-            if (!user) return;
-            try {
-                const res = await fetch(`http://localhost:5000/api/profile/${user.id}`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                });
-                const data = await res.json();
-                if (data.success && data.user.profileImage) {
-                    setProfileImage(data.user.profileImage);
-                }
-            } catch (error) {
-                console.error('Failed to fetch profile image:', error);
-            }
-        };
-        fetchProfileImage();
-    }, [user]);
+        const hour = new Date().getHours();
+        if (hour < 12) {
+            setTimeGreeting('Good Morning! ☀️ Start your day with these picks.');
+            setTimeIcon(Coffee);
+        } else if (hour < 18) {
+            setTimeGreeting('Good Afternoon! 🌤️ Perfect time for a break.');
+            setTimeIcon(Sun);
+        } else {
+            setTimeGreeting('Good Evening! 🌙 Relax with a great movie.');
+            setTimeIcon(Moon);
+        }
+    }, []);
 
-    const handleSearch = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!prompt.trim()) return;
+    // Decision Fatigue Logic
+    useEffect(() => {
+        if (interactionCount > 5 && !showFatiguePopup) {
+            setShowFatiguePopup(true);
+        }
+    }, [interactionCount, showFatiguePopup]);
 
-        setLoading(true);
-        setHasSearched(true);
+    const incrementInteraction = () => setInteractionCount(prev => prev + 1);
 
+    // Scroll to categories handler
+    const scrollToCategories = () => {
+        categoriesRef.current?.scrollIntoView({ behavior: 'smooth' });
+        incrementInteraction();
+    };
+
+    // Surprise Me Handler
+    const handleSurpriseMe = async () => {
+        incrementInteraction();
+        const toastId = toast.loading('Finding a perfect pick...');
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:5000/api/recommendations', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ prompt })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                setRecommendations(data.data.recommendations);
+            const data = await tmdbApi.getTrending('week');
+            if (data.results && data.results.length > 0) {
+                const randomMovie = data.results[Math.floor(Math.random() * data.results.length)];
+                toast.success(`How about: ${randomMovie.title}?`, { id: toastId });
+                setDetailMovieId(randomMovie.id);
+            } else {
+                toast.error('Could not find a movie.', { id: toastId });
             }
         } catch (error) {
-            console.error('Failed to get recommendations', error);
+            console.error('Surprise Me Error:', error);
+            toast.error('Failed to surprise you.', { id: toastId });
+        }
+    };
+
+    // Fetch Movies for Categories
+    const fetchMovies = async (type: 'mood' | 'time' | 'audience', value: string) => {
+        setLoading(true);
+        try {
+            let filters: any = { sort_by: 'popularity.desc', 'vote_count.gte': 100 };
+
+            // Mood Logic
+            if (type === 'mood') {
+                if (value === 'happy') filters.with_genres = '35,10751';
+                if (value === 'sad') filters.with_genres = '18';
+                if (value === 'mindblown') filters.with_genres = '878,9648';
+            }
+
+            // Time Logic
+            if (type === 'time') {
+                if (value === 'quick') filters['with_runtime.lte'] = 90;
+                if (value === 'standard') { filters['with_runtime.gte'] = 90; filters['with_runtime.lte'] = 120; }
+                if (value === 'epic') filters['with_runtime.gte'] = 120;
+            }
+
+            // Audience Logic
+            if (type === 'audience') {
+                if (value === 'family') filters.with_genres = '10751,16';
+                if (value === 'date') filters.with_genres = '10749';
+                if (value === 'solo') filters.with_genres = '53,27';
+            }
+
+            const data = await tmdbApi.discoverMovies(filters);
+
+            if (type === 'mood') setMoodMovies(data.results || []);
+            if (type === 'time') setTimeMovies(data.results || []);
+            if (type === 'audience') setAudienceMovies(data.results || []);
+
+        } catch (error) {
+            console.error(`Error fetching ${type} movies:`, error);
+            toast.error('Failed to load recommendations.');
         } finally {
             setLoading(false);
         }
     };
 
-    const quickPrompts = [
-        "Hidden gems from the 90s",
-        "Mind-bending sci-fi",
-        "Feel-good comedy",
-        "Dark psychological thrillers"
-    ];
+    // Effect to fetch when selection changes
+    useEffect(() => {
+        if (selectedMood) { fetchMovies('mood', selectedMood); incrementInteraction(); }
+    }, [selectedMood]);
+
+    useEffect(() => {
+        if (selectedTime) { fetchMovies('time', selectedTime); incrementInteraction(); }
+    }, [selectedTime]);
+
+    useEffect(() => {
+        if (selectedAudience) { fetchMovies('audience', selectedAudience); incrementInteraction(); }
+    }, [selectedAudience]);
+
+    // Handlers for Movie Actions
+    const handleMovieClick = (id: number) => { setDetailMovieId(id); incrementInteraction(); };
+    const handleTrailerClick = (id: number) => {
+        navigate(`/trailer/${id}`);
+    };
+    const handleWatchlistClick = async (movie: Movie) => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token || !user) {
+                toast.error('Please login to add to watchlist');
+                return;
+            }
+            await fetch(`http://localhost:5000/api/watchlist/${user.id}/default/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ movieId: movie.id })
+            });
+            toast.success('Added to watchlist');
+        } catch (error) {
+            console.error('Watchlist error:', error);
+            toast.error('Failed to add to watchlist');
+        }
+    };
+
+    // Smart Filter Handler
+    const handleSmartFilter = async (filters: any) => {
+        incrementInteraction();
+        const toastId = toast.loading('Finding your perfect match...');
+        try {
+            let apiFilters: any = { sort_by: 'popularity.desc', 'vote_count.gte': 100 };
+
+            // Map answers to API filters
+            if (filters.mood === 'happy') apiFilters.with_genres = '35,10751';
+            if (filters.mood === 'sad') apiFilters.with_genres = '18';
+            if (filters.mood === 'excited') apiFilters.with_genres = '28,12';
+            if (filters.mood === 'thoughtful') apiFilters.with_genres = '99,36';
+
+            if (filters.audience === 'family') apiFilters.with_genres = (apiFilters.with_genres ? apiFilters.with_genres + ',' : '') + '10751,16';
+            if (filters.audience === 'partner') apiFilters.with_genres = (apiFilters.with_genres ? apiFilters.with_genres + ',' : '') + '10749';
+
+            if (filters.time === 'short') apiFilters['with_runtime.lte'] = 90;
+            if (filters.time === 'medium') { apiFilters['with_runtime.gte'] = 90; apiFilters['with_runtime.lte'] = 120; }
+            if (filters.time === 'long') apiFilters['with_runtime.gte'] = 120;
+
+            const data = await tmdbApi.discoverMovies(apiFilters);
+
+            if (data.results && data.results.length > 0) {
+                const bestMatch = data.results[0];
+                setDetailMovieId(bestMatch.id);
+                toast.success('Found a match!', { id: toastId });
+            } else {
+                toast.error('No movies found matching your criteria.', { id: toastId });
+            }
+        } catch (error) {
+            console.error('Smart Filter Error:', error);
+            toast.error('Failed to filter movies.', { id: toastId });
+        }
+    };
 
     return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col">
-            {/* Navbar */}
-            <nav className="w-full z-50 bg-background/80 backdrop-blur-md border-b border-white/10 px-4 md:px-12 py-4 flex items-center justify-between sticky top-0">
-                <div className="flex items-center gap-8">
-                    <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-primary/10 rounded-lg border border-primary/20">
-                            <img src="/logo.png" alt="CinePick Logo" className="w-5 h-5" />
+        <div className="min-h-screen bg-background pb-20 pt-20">
+            <Navbar />
+
+            {/* Time-Aware Greeting */}
+            <div className="max-w-7xl mx-auto px-4 md:px-8 mt-4 mb-8">
+                <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-primary/20 rounded-full text-primary">
+                            {timeIcon && (() => {
+                                const Icon = timeIcon;
+                                return <Icon size={24} />;
+                            })()}
                         </div>
-                        <h1 className="text-xl font-bold text-white tracking-tight">
-                            CinePick
-                        </h1>
+                        <p className="text-lg font-medium text-gray-200">{timeGreeting}</p>
                     </div>
-                    <div className="hidden md:flex gap-6 text-sm font-medium text-muted-foreground">
-                        <Link to="/dashboard" className="text-primary">Discover</Link>
-                        <Link to="/library" className="hover:text-white transition-colors">Library</Link>
-                    </div>
-                </div>
-                <div className="flex items-center gap-4">
-                    <div className="relative group">
+
+                    <div className="flex gap-3">
+                        {/* Playlist Generator Trigger */}
                         <button
-                            onClick={() => navigate('/profile')}
-                            className="flex items-center gap-2 hover:bg-white/5 px-3 py-1.5 rounded-full transition-colors cursor-pointer"
+                            onClick={() => setIsPlaylistOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-medium transition-colors border border-white/10"
                         >
-                            {profileImage ? (
-                                <img
-                                    src={profileImage}
-                                    alt="Profile"
-                                    className="w-8 h-8 rounded-full object-cover border-2 border-primary/30"
-                                />
-                            ) : (
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/80 to-purple-600/80 flex items-center justify-center text-white font-medium text-sm">
-                                    {user?.name?.charAt(0) || 'U'}
-                                </div>
-                            )}
+                            <Music size={18} />
+                            <span>Playlist</span>
                         </button>
-                        <div className="absolute right-0 mt-2 w-48 bg-card border border-white/10 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-50">
-                            <div className="py-1">
-                                <div className="px-4 py-2 text-sm text-muted-foreground border-b border-white/10">
-                                    <span className="text-white font-medium block">{user?.name || user?.email}</span>
-                                </div>
-                                <button
-                                    onClick={() => {
-                                        logout();
-                                        navigate('/login');
-                                    }}
-                                    className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/10 cursor-pointer transition-colors"
-                                >
-                                    Sign out
-                                </button>
-                            </div>
-                        </div>
+
+                        {/* Watch Party Trigger */}
+                        <button
+                            onClick={() => setIsWatchPartyOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 rounded-lg text-sm font-medium transition-colors shadow-lg shadow-pink-500/20"
+                        >
+                            <Tv size={18} />
+                            <span>Watch Party</span>
+                        </button>
+
+                        {/* Swipe Mode Trigger */}
+                        <button
+                            onClick={() => setIsSwipeOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-medium transition-colors border border-white/10"
+                        >
+                            <Layers size={18} />
+                            <span>Swipe Mode</span>
+                        </button>
                     </div>
                 </div>
-            </nav>
+            </div>
 
-            {/* Main Content */}
-            <main className="flex-1 flex flex-col items-center justify-start pt-12 md:pt-24 px-4 pb-12 max-w-7xl mx-auto w-full">
+            {/* Hero Section */}
+            <DiscoveryHero
+                onOpenChat={() => setIsChatOpen(true)}
+                onScrollToCategories={scrollToCategories}
+                onSurpriseMe={handleSurpriseMe}
+            />
 
-                {/* Search Section */}
-                <div className={`w-full max-w-3xl text-center transition-all duration-500 ${hasSearched ? 'mb-12' : 'mb-0 flex-1 flex flex-col justify-center'}`}>
-                    {!hasSearched && (
-                        <>
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20">
-                                <Sparkles size={14} />
-                                <span>AI-Powered Discovery</span>
+            {/* AI Wizard Trigger */}
+            <div className="fixed bottom-24 left-8 z-40">
+                <button
+                    onClick={() => setIsWizardOpen(true)}
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-full shadow-lg hover:shadow-purple-500/50 transition-all transform hover:scale-105"
+                >
+                    <Sparkles size={20} />
+                    <span className="font-semibold">AI Assistant</span>
+                </button>
+            </div>
+
+            <PickForMeButton onPick={handleMovieClick} />
+
+            <DecisionFilter
+                isOpen={isFilterOpen}
+                onClose={() => setIsFilterOpen(false)}
+                onComplete={handleSmartFilter}
+            />
+
+            <AIConversationWizard
+                isOpen={isWizardOpen}
+                onClose={() => setIsWizardOpen(false)}
+                onMovieSelect={(id) => {
+                    setDetailMovieId(id);
+                    setIsWizardOpen(false);
+                }}
+            />
+
+            <SwipeEliminator
+                isOpen={isSwipeOpen}
+                onClose={() => setIsSwipeOpen(false)}
+                onMovieSelect={(id) => {
+                    setDetailMovieId(id);
+                    setIsSwipeOpen(false);
+                }}
+            />
+
+            <WatchParty
+                isOpen={isWatchPartyOpen}
+                onClose={() => setIsWatchPartyOpen(false)}
+            />
+
+            <MoodPlaylistGenerator
+                isOpen={isPlaylistOpen}
+                onClose={() => setIsPlaylistOpen(false)}
+                onMovieSelect={(id) => {
+                    setDetailMovieId(id);
+                    setIsPlaylistOpen(false);
+                }}
+            />
+
+            {/* Decision Fatigue Popup */}
+            <AnimatePresence>
+                {showFatiguePopup && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 50 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 50 }}
+                        className="fixed bottom-24 right-8 z-50 bg-card border border-primary/50 p-6 rounded-xl shadow-2xl max-w-sm"
+                    >
+                        <div className="flex items-start gap-4">
+                            <div className="p-3 bg-primary/20 rounded-full text-primary">
+                                <Sparkles size={24} />
                             </div>
-                            <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent tracking-tight">
-                                Find your next favorite movie.
-                            </h1>
-                            <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
-                                No more endless scrolling. Just tell us what you're in the mood for, and let our AI curate the perfect list.
-                            </p>
-                        </>
-                    )}
-
-                    <form onSubmit={handleSearch} className="relative w-full max-w-2xl mx-auto mb-8">
-                        <div className="relative group">
-                            <div className="absolute -inset-1 bg-gradient-to-r from-primary/50 to-purple-600/50 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                            <div className="relative flex items-center bg-card border border-white/10 rounded-2xl shadow-2xl">
-                                <Search className="ml-6 text-muted-foreground" size={24} />
-                                <input
-                                    type="text"
-                                    value={prompt}
-                                    onChange={(e) => setPrompt(e.target.value)}
-                                    placeholder="Describe the movie you want to watch..."
-                                    className="w-full bg-transparent border-none px-4 py-6 text-lg text-white placeholder:text-muted-foreground/50 focus:outline-none focus:ring-0"
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={loading || !prompt.trim()}
-                                    className="mr-2 p-3 bg-primary hover:bg-primary/90 text-white rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {loading ? <Loader2 className="animate-spin" size={24} /> : <Send size={24} />}
-                                </button>
+                            <div>
+                                <h4 className="font-bold text-lg mb-2">Trouble deciding?</h4>
+                                <p className="text-muted-foreground text-sm mb-4">
+                                    You've been browsing for a while. Want me to just pick the perfect movie for you?
+                                </p>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => {
+                                            setShowFatiguePopup(false);
+                                            // Trigger Pick For Me logic programmatically or just open Wizard
+                                            setIsWizardOpen(true);
+                                        }}
+                                        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90"
+                                    >
+                                        Yes, help me!
+                                    </button>
+                                    <button
+                                        onClick={() => setShowFatiguePopup(false)}
+                                        className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm"
+                                    >
+                                        I'm good
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    </form>
-
-                    {!hasSearched && (
-                        <div className="flex flex-wrap justify-center gap-3">
-                            {quickPrompts.map((p, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => {
-                                        setPrompt(p);
-                                        // Optional: auto-submit
-                                    }}
-                                    className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-sm text-gray-300 transition-colors"
-                                >
-                                    {p}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* Results Section */}
-                {hasSearched && (
-                    <div className="w-full animate-in fade-in slide-in-from-bottom-8 duration-700">
-                        <div className="flex items-center justify-between mb-8">
-                            <h2 className="text-2xl font-bold flex items-center gap-2">
-                                <Sparkles className="text-primary" size={20} />
-                                Recommendations
-                            </h2>
                             <button
-                                onClick={() => {
-                                    setHasSearched(false);
-                                    setRecommendations([]);
-                                    setPrompt('');
-                                }}
-                                className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-sm font-medium transition-colors flex items-center gap-2"
+                                onClick={() => setShowFatiguePopup(false)}
+                                className="text-muted-foreground hover:text-white"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M19 12H5M12 19l-7-7 7-7" />
-                                </svg>
-                                Back to Search
+                                <Sparkles size={16} className="rotate-45" />
                             </button>
                         </div>
-
-                        {loading ? (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                {[1, 2, 3].map((i) => (
-                                    <div key={i} className="h-[400px] bg-white/5 rounded-2xl animate-pulse"></div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {recommendations.map((movie, index) => (
-                                    <div key={index} className="bg-card border border-white/10 rounded-2xl overflow-hidden hover:border-primary/30 transition-all group flex flex-col">
-                                        <div className="aspect-video bg-gray-800 relative overflow-hidden">
-                                            {/* Placeholder for dynamic poster */}
-                                            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 text-gray-600">
-                                                <Film size={48} className="opacity-20" />
-                                            </div>
-                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-                                                <button className="bg-white text-black px-6 py-2 rounded-full font-bold flex items-center gap-2 hover:bg-white/90 transition-colors transform translate-y-4 group-hover:translate-y-0 duration-300">
-                                                    <Play size={16} /> Watch Trailer
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div className="p-6 flex-1 flex flex-col">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <h3 className="text-xl font-bold text-white leading-tight">{movie.title}</h3>
-                                                <span className="text-xs font-medium text-gray-400 bg-white/5 px-2 py-1 rounded border border-white/10">{movie.year}</span>
-                                            </div>
-                                            <p className="text-sm text-primary mb-4 font-medium">{movie.director}</p>
-                                            <p className="text-muted-foreground text-sm leading-relaxed mb-6 flex-1">
-                                                {movie.reason}
-                                            </p>
-                                            <div className="flex gap-3 mt-auto">
-                                                <button className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-medium transition-colors">
-                                                    Details
-                                                </button>
-                                                <button className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-gray-400 hover:text-primary transition-colors">
-                                                    <List size={18} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    </motion.div>
                 )}
-            </main>
+            </AnimatePresence>
+
+            {/* Main Content - Categories */}
+            <div ref={categoriesRef} className="max-w-7xl mx-auto px-4 md:px-8 space-y-12">
+
+                {/* 1. Mood Section */}
+                <InteractiveCategory
+                    title="What's your mood?"
+                    selectedOption={selectedMood}
+                    onSelect={setSelectedMood}
+                    options={[
+                        { id: 'happy', label: 'Happy & Light', icon: Smile, color: 'from-yellow-400 to-orange-500', description: 'Comedies and feel-good stories' },
+                        { id: 'sad', label: 'Emotional & Deep', icon: Frown, color: 'from-blue-400 to-indigo-500', description: 'Dramas that touch the heart' },
+                        { id: 'mindblown', label: 'Mind-Blowing', icon: Zap, color: 'from-purple-400 to-pink-500', description: 'Sci-fi and twists' }
+                    ]}
+                >
+                    <CuratedSection
+                        movies={moodMovies}
+                        loading={loading}
+                        onMovieClick={handleMovieClick}
+                        onTrailerClick={handleTrailerClick}
+                        onWatchlistClick={handleWatchlistClick}
+                    />
+                </InteractiveCategory>
+
+                {/* 2. Time Section */}
+                <InteractiveCategory
+                    title="How much time do you have?"
+                    selectedOption={selectedTime}
+                    onSelect={setSelectedTime}
+                    options={[
+                        { id: 'quick', label: 'Quick Watch', icon: Clock, color: 'from-green-400 to-emerald-500', description: 'Under 90 minutes' },
+                        { id: 'standard', label: 'Movie Night', icon: Film, color: 'from-blue-400 to-cyan-500', description: '90 - 120 minutes' },
+                        { id: 'epic', label: 'Epic Journey', icon: Calendar, color: 'from-red-400 to-rose-500', description: 'Over 2 hours' }
+                    ]}
+                >
+                    <CuratedSection
+                        movies={timeMovies}
+                        loading={loading}
+                        onMovieClick={handleMovieClick}
+                        onTrailerClick={handleTrailerClick}
+                        onWatchlistClick={handleWatchlistClick}
+                    />
+                </InteractiveCategory>
+
+                {/* 3. Audience Section */}
+                <InteractiveCategory
+                    title="Who's watching?"
+                    selectedOption={selectedAudience}
+                    onSelect={setSelectedAudience}
+                    options={[
+                        { id: 'family', label: 'Family Fun', icon: Users, color: 'from-orange-400 to-red-500', description: 'Safe for all ages' },
+                        { id: 'date', label: 'Date Night', icon: Heart, color: 'from-pink-400 to-rose-500', description: 'Romance and connection' },
+                        { id: 'solo', label: 'Solo Adventure', icon: User, color: 'from-indigo-400 to-violet-500', description: 'Thrillers and intense films' }
+                    ]}
+                >
+                    <CuratedSection
+                        movies={audienceMovies}
+                        loading={loading}
+                        onMovieClick={handleMovieClick}
+                        onTrailerClick={handleTrailerClick}
+                        onWatchlistClick={handleWatchlistClick}
+                    />
+                </InteractiveCategory>
+
+            </div>
 
             {/* Chatbot */}
-            <Chatbot />
+            <Chatbot isOpen={isChatOpen} onToggle={setIsChatOpen} />
+
+            {/* Modals */}
+            {detailMovieId && (
+                <MovieDetailModal
+                    movieId={detailMovieId}
+                    onClose={() => setDetailMovieId(null)}
+                    onTrailerClick={handleTrailerClick}
+                    onWatchlistClick={handleWatchlistClick}
+                />
+            )}
         </div>
     );
 }

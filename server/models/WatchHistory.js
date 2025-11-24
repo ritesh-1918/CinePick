@@ -22,6 +22,19 @@ const watchHistorySchema = new mongoose.Schema({
         },
         mood: String,
         platform: String,
+        watchedTime: {
+            type: String,
+            enum: ['morning', 'afternoon', 'evening', 'night']
+        },
+        dayOfWeek: {
+            type: String,
+            enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        },
+        hourOfDay: {
+            type: Number,
+            min: 0,
+            max: 23
+        },
         reviewId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Review'

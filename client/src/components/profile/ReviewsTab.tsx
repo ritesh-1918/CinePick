@@ -1,8 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Star, ThumbsUp, MoreHorizontal } from 'lucide-react';
+import { Star, ThumbsUp, MoreHorizontal, Film } from 'lucide-react';
 
-export default function ReviewsTab({ userId }) {
-    const [reviews, setReviews] = useState([]);
+interface MovieDetails {
+    title: string;
+    poster_path: string | null;
+    release_date?: string;
+}
+
+interface Review {
+    _id: string;
+    movieId: string;
+    rating: number;
+    content: string;
+    mood?: string;
+    isPublic: boolean;
+    createdAt: string;
+    likes?: string[];
+    movieDetails?: MovieDetails;
+}
+
+export default function ReviewsTab({ userId }: { userId: string }) {
+    const [reviews, setReviews] = useState<Review[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -31,12 +49,22 @@ export default function ReviewsTab({ userId }) {
             {reviews.map((review) => (
                 <div key={review._id} className="bg-card/50 p-6 rounded-xl border border-white/10 flex flex-col gap-4">
                     <div className="flex gap-4">
-                        <div className="w-16 h-24 bg-gray-800 rounded-lg flex-shrink-0">
-                            {/* Poster Placeholder */}
+                        <div className="w-16 h-24 bg-gray-800 rounded-lg flex-shrink-0 overflow-hidden">
+                            {review.movieDetails?.poster_path ? (
+                                <img
+                                    src={`https://image.tmdb.org/t/p/w200${review.movieDetails.poster_path}`}
+                                    alt={review.movieDetails.title}
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gray-800 text-gray-600">
+                                    <Film size={20} />
+                                </div>
+                            )}
                         </div>
                         <div className="flex-1">
                             <div className="flex justify-between items-start">
-                                <h4 className="font-semibold text-lg">Movie ID: {review.movieId}</h4>
+                                <h4 className="font-semibold text-lg line-clamp-1">{review.movieDetails?.title || `Movie ID: ${review.movieId}`}</h4>
                                 <button className="text-muted-foreground hover:text-white">
                                     <MoreHorizontal size={20} />
                                 </button>
@@ -67,8 +95,8 @@ export default function ReviewsTab({ userId }) {
                                 <span>{review.likes?.length || 0} Helpful</span>
                             </button>
                             <span className={`text-xs px-2 py-1 rounded-full border ${review.isPublic
-                                    ? 'bg-green-500/10 text-green-500 border-green-500/20'
-                                    : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
+                                ? 'bg-green-500/10 text-green-500 border-green-500/20'
+                                : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
                                 }`}>
                                 {review.isPublic ? 'Public' : 'Private'}
                             </span>

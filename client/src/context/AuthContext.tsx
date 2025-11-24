@@ -1,9 +1,10 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 
 interface User {
     id: string;
     email: string;
     name?: string;
+    profileImage?: string;
     hasCompletedSurvey: boolean;
     preferences?: any;
 }
