@@ -15,7 +15,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-    origin: true, // Allow all origins in development
+    origin: process.env.FRONTEND_URL || true, // Allow specific origin in production, or all in dev
     credentials: true // Allow cookies
 }));
 app.use(express.json());
@@ -119,6 +119,10 @@ app.get('/', (req, res) => {
     res.send('CinePick API is running');
 });
 
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`🚀 Server running on http://localhost:${PORT}`);
+    });
+}
+
+module.exports = app;

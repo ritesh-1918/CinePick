@@ -185,7 +185,7 @@ router.post('/avatar', auth, upload.single('avatar'), async (req, res) => {
         if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
         const user = await User.findById(req.userId);
         if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-        const fileUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+        const fileUrl = `${process.env.BASE_URL || 'http://localhost:5000'}/uploads/${req.file.filename}`;
         user.profileImage = fileUrl;
         await user.save();
         res.json({ success: true, message: 'Profile picture updated', fileUrl });

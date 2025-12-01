@@ -4,6 +4,7 @@
   "description": "CinePick - Movie Picker App",
   "scripts": {
     "start": "concurrently \"npm run server\" \"npm run client\"",
+    "build": "cd client && npm install && npm run build",
     "server": "cd server && npm run dev",
     "client": "cd client && npm run dev",
     "install:all": "npm install && cd client && npm install && cd ../server && npm install"
