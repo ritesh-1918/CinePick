@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import Chatbot from '@/components/Chatbot';
-import { Sparkles, TrendingUp, Star, Calendar, Filter, Film, Bookmark } from 'lucide-react';
+import { TrendingUp, Star, Calendar, Film, Bookmark, LayoutDashboard, Compass, Library as LibraryBig, UserCog, LogOut } from 'lucide-react';
+import { Sidebar, SidebarBody, SidebarLink } from '@/components/ui/sidebar';
+import { Logo, LogoIcon } from '@/components/ui/Logo';
+import { cn } from '@/lib/utils';
+import tmdbApi from '@/services/tmdb';
 
 interface Movie {
     id: number;
@@ -16,24 +20,53 @@ interface Movie {
 export default function Discovery() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
-    const [selectedGenre, setSelectedGenre] = useState<string>('all');
     const [trending, setTrending] = useState<Movie[]>([]);
     const [popular, setPopular] = useState<Movie[]>([]);
     const [nowPlaying, setNowPlaying] = useState<Movie[]>([]);
     const [loading, setLoading] = useState(true);
+    const [open, setOpen] = useState(false);
 
-    const genres = [
-        { id: 'all', name: 'All' },
-        { id: '28', name: 'Action' },
-        { id: '35', name: 'Comedy' },
-        { id: '18', name: 'Drama' },
-        { id: '27', name: 'Horror' },
-        { id: '878', name: 'Sci-Fi' },
-        { id: '10749', name: 'Romance' },
-        { id: '53', name: 'Thriller' },
-        { id: '16', name: 'Animation' },
-        { id: '99', name: 'Documentary' }
+
+
+    const links = [
+        {
+            label: "Dashboard",
+            href: "/dashboard",
+            icon: (
+                <LayoutDashboard className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+            ),
+        },
+        {
+            label: "Discovery",
+            href: "/discovery",
+            icon: (
+                <Compass className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+            ),
+        },
+        {
+            label: "Library",
+            href: "/library",
+            icon: (
+                <LibraryBig className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+            ),
+        },
+        {
+            label: "Profile",
+            href: "/profile",
+            icon: (
+                <UserCog className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+            ),
+        },
     ];
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+            navigate('/login');
+        } catch (error) {
+            console.error('Logout failed', error);
+        }
+    };
 
     useEffect(() => {
         fetchMovies();
@@ -41,22 +74,15 @@ export default function Discovery() {
 
     const fetchMovies = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const headers = { 'Authorization': `Bearer ${token}` };
-
-            const [trendingRes, popularRes, nowPlayingRes] = await Promise.all([
-                fetch('http://localhost:5000/api/tmdb/trending', { headers }),
-                fetch('http://localhost:5000/api/tmdb/popular', { headers }),
-                fetch('http://localhost:5000/api/tmdb/now-playing', { headers })
+            const [trendingData, popularData, nowPlayingData] = await Promise.all([
+                tmdbApi.getTrending(),
+                tmdbApi.getPopular(),
+                tmdbApi.getNowPlaying()
             ]);
 
-            const trendingData = await trendingRes.json();
-            const popularData = await popularRes.json();
-            const nowPlayingData = await nowPlayingRes.json();
-
-            if (trendingData.success) setTrending(trendingData.data);
-            if (popularData.success) setPopular(popularData.data);
-            if (nowPlayingData.success) setNowPlaying(nowPlayingData.data);
+            if (trendingData && trendingData.results) setTrending(trendingData.results);
+            if (popularData && popularData.results) setPopular(popularData.results);
+            if (nowPlayingData && nowPlayingData.results) setNowPlaying(nowPlayingData.results);
 
         } catch (error) {
             console.error('Failed to fetch movies:', error);
@@ -127,121 +153,123 @@ export default function Discovery() {
     );
 
     return (
-        <div className="min-h-screen bg-background text-foreground">
-            {/* Navbar */}
-            <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-white/10 px-4 md:px-12 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-8">
-                    <Link to="/dashboard" className="flex items-center gap-2">
-                        <div className="p-1.5 bg-primary/10 rounded-lg border border-primary/20">
-                            <img src="/logo.png" alt="CinePick Logo" className="w-5 h-5" />
-                        </div>
-                        <h1 className="text-xl font-bold text-white tracking-tight">CinePick</h1>
-                    </Link>
-                    <div className="hidden md:flex gap-6 text-sm font-medium text-muted-foreground">
-                        <Link to="/dashboard" className="hover:text-white transition-colors">Discover</Link>
-                        <Link to="/library" className="hover:text-white transition-colors">Library</Link>
-                        <Link to="/discovery" className="text-primary">Browse</Link>
-                    </div>
-                </div>
-                <div className="flex items-center gap-4">
-                    <div className="relative group">
-                        <button className="flex items-center gap-2 hover:bg-white/5 px-3 py-1.5 rounded-full transition-colors">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/80 to-purple-600/80 flex items-center justify-center text-white font-medium text-sm">
-                                {user?.name?.charAt(0) || 'U'}
-                            </div>
-                        </button>
-                        <div className="absolute right-0 mt-2 w-48 bg-card border border-white/10 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-50">
-                            <div className="py-1">
-                                <div className="px-4 py-2 text-sm text-muted-foreground border-b border-white/10">
-                                    <span className="text-white font-medium block">{user?.name || user?.email}</span>
-                                </div>
-                                <Link to="/profile" className="block px-4 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white">Profile</Link>
-                                <button
-                                    onClick={() => {
-                                        logout();
-                                        navigate('/login');
+        <div className={cn(
+            "rounded-md flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-800 w-full flex-1 max-w-7xl mx-auto border border-neutral-200 dark:border-neutral-700 overflow-hidden",
+            "h-screen"
+        )}>
+            <Sidebar open={open} setOpen={setOpen}>
+                <SidebarBody className="justify-between gap-10">
+                    <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
+                        {open ? <Logo /> : <LogoIcon />}
+                        <div className="mt-8 flex flex-col gap-2">
+                            {links.map((link, idx) => (
+                                <SidebarLink key={idx} link={link} />
+                            ))}
+                            <div
+                                onClick={handleLogout}
+                                className="cursor-pointer"
+                            >
+                                <SidebarLink
+                                    link={{
+                                        label: "Logout",
+                                        href: "#",
+                                        icon: (
+                                            <LogOut className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+                                        ),
                                     }}
-                                    className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/10"
-                                >
-                                    Sign out
-                                </button>
+                                />
                             </div>
                         </div>
                     </div>
-                </div>
-            </nav>
-
-            <main className="pt-32 px-4 md:px-12 pb-20 max-w-7xl mx-auto">
-                <div className="mb-12">
-                    <h1 className="text-4xl font-bold mb-2">Browse Movies</h1>
-                    <p className="text-muted-foreground">Explore thousands of movies powered by TMDB</p>
-                </div>
-
-                {/* Trending Section */}
-                <section className="mb-16">
-                    <div className="flex items-center gap-3 mb-6">
-                        <TrendingUp className="text-primary" size={24} />
-                        <h2 className="text-2xl font-bold">Trending This Week</h2>
+                    <div>
+                        <SidebarLink
+                            link={{
+                                label: user?.name || "User",
+                                href: "/profile",
+                                icon: (
+                                    <div className="h-7 w-7 rounded-full bg-neutral-300 dark:bg-neutral-600 flex items-center justify-center text-xs font-bold">
+                                        {user?.name?.charAt(0) || "U"}
+                                    </div>
+                                ),
+                            }}
+                        />
                     </div>
-                    {loading ? (
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
-                            {[1, 2, 3, 4].map(i => (
-                                <div key={i} className="aspect-[2/3] bg-white/5 rounded-xl animate-pulse"></div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
-                            {trending.slice(0, 8).map((movie) => (
-                                <MovieCard key={movie.id} movie={movie} />
-                            ))}
-                        </div>
-                    )}
-                </section>
+                </SidebarBody>
+            </Sidebar>
 
-                {/* Popular Section */}
-                <section className="mb-16">
-                    <div className="flex items-center gap-3 mb-6">
-                        <Star className="text-primary" size={24} />
-                        <h2 className="text-2xl font-bold">Most Popular</h2>
+            <div className="flex flex-1 flex-col overflow-y-auto h-full bg-background">
+                <main className="px-4 md:px-12 py-8 w-full">
+                    <div className="mb-12">
+                        <h1 className="text-4xl font-bold mb-2">Browse Movies</h1>
+                        <p className="text-muted-foreground">Explore thousands of movies powered by TMDB</p>
                     </div>
-                    {loading ? (
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
-                            {[1, 2, 3, 4].map(i => (
-                                <div key={i} className="aspect-[2/3] bg-white/5 rounded-xl animate-pulse"></div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
-                            {popular.slice(0, 8).map((movie) => (
-                                <MovieCard key={movie.id} movie={movie} />
-                            ))}
-                        </div>
-                    )}
-                </section>
 
-                {/* New Releases */}
-                <section>
-                    <div className="flex items-center gap-3 mb-6">
-                        <Calendar className="text-primary" size={24} />
-                        <h2 className="text-2xl font-bold">Now Playing</h2>
-                    </div>
-                    {loading ? (
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
-                            {[1, 2, 3, 4].map(i => (
-                                <div key={i} className="aspect-[2/3] bg-white/5 rounded-xl animate-pulse"></div>
-                            ))}
+                    {/* Trending Section */}
+                    <section className="mb-16">
+                        <div className="flex items-center gap-3 mb-6">
+                            <TrendingUp className="text-primary" size={24} />
+                            <h2 className="text-2xl font-bold">Trending This Week</h2>
                         </div>
-                    ) : (
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
-                            {nowPlaying.slice(0, 8).map((movie) => (
-                                <MovieCard key={movie.id} movie={movie} />
-                            ))}
-                        </div>
-                    )}
-                </section>
-            </main>
+                        {loading ? (
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
+                                {[1, 2, 3, 4].map(i => (
+                                    <div key={i} className="aspect-[2/3] bg-white/5 rounded-xl animate-pulse"></div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
+                                {trending.slice(0, 8).map((movie) => (
+                                    <MovieCard key={movie.id} movie={movie} />
+                                ))}
+                            </div>
+                        )}
+                    </section>
 
-            <Chatbot />
+                    {/* Popular Section */}
+                    <section className="mb-16">
+                        <div className="flex items-center gap-3 mb-6">
+                            <Star className="text-primary" size={24} />
+                            <h2 className="text-2xl font-bold">Most Popular</h2>
+                        </div>
+                        {loading ? (
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
+                                {[1, 2, 3, 4].map(i => (
+                                    <div key={i} className="aspect-[2/3] bg-white/5 rounded-xl animate-pulse"></div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
+                                {popular.slice(0, 8).map((movie) => (
+                                    <MovieCard key={movie.id} movie={movie} />
+                                ))}
+                            </div>
+                        )}
+                    </section>
+
+                    {/* New Releases */}
+                    <section>
+                        <div className="flex items-center gap-3 mb-6">
+                            <Calendar className="text-primary" size={24} />
+                            <h2 className="text-2xl font-bold">Now Playing</h2>
+                        </div>
+                        {loading ? (
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
+                                {[1, 2, 3, 4].map(i => (
+                                    <div key={i} className="aspect-[2/3] bg-white/5 rounded-xl animate-pulse"></div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
+                                {nowPlaying.slice(0, 8).map((movie) => (
+                                    <MovieCard key={movie.id} movie={movie} />
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                </main>
+
+                <Chatbot />
+            </div>
         </div>
     );
 }

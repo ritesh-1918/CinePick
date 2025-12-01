@@ -8,9 +8,11 @@ interface SwipeEliminatorProps {
     isOpen: boolean;
     onClose: () => void;
     onMovieSelect: (movieId: number) => void;
+    initialMovies?: Movie[]; // For Watch Party
+    onVote?: (likedMovieIds: number[]) => void; // For Watch Party
 }
 
-export default function SwipeEliminator({ isOpen, onClose, onMovieSelect }: SwipeEliminatorProps) {
+export default function SwipeEliminator({ isOpen, onClose, onMovieSelect, initialMovies, onVote }: SwipeEliminatorProps) {
     const [movies, setMovies] = useState<Movie[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [likedMovies, setLikedMovies] = useState<Movie[]>([]);
@@ -28,27 +30,42 @@ export default function SwipeEliminator({ isOpen, onClose, onMovieSelect }: Swip
     );
 
     useEffect(() => {
-        if (isOpen && movies.length === 0) {
-            fetchMovies();
+        if (isOpen) {
+            if (initialMovies && initialMovies.length > 0) {
+                setMovies(initialMovies);
+                setLoading(false);
+                setCurrentIndex(0);
+                setLikedMovies([]);
+                setShowWinner(false);
+            } else if (movies.length === 0) {
+                fetchMovies();
+            }
         }
-    }, [isOpen]);
+    }, [isOpen, initialMovies]);
 
     const fetchMovies = async () => {
         setLoading(true);
         try {
             // Fetch popular movies or a specific mix
-            const data = await tmdbApi.getTrending('week');
-            if (data.results) {
+            const response = await tmdbApi.getTrending('week');
+            // Handle both array (if changed later) and object with results
+            const results = Array.isArray(response) ? response : response?.results;
+
+            if (results && results.length > 0) {
                 // Shuffle array
-                const shuffled = data.results.sort(() => 0.5 - Math.random());
+                const shuffled = [...results].sort(() => 0.5 - Math.random());
                 setMovies(shuffled.slice(0, 10)); // Take top 10 for the session
                 setCurrentIndex(0);
                 setLikedMovies([]);
                 setShowWinner(false);
+            } else {
+                toast.error('No movies found to swipe on.');
+                setMovies([]); // Ensure empty state
             }
         } catch (error) {
             console.error('Swipe Error:', error);
             toast.error('Failed to load movies');
+            setMovies([]);
         } finally {
             setLoading(false);
         }
@@ -61,6 +78,15 @@ export default function SwipeEliminator({ isOpen, onClose, onMovieSelect }: Swip
 
         if (currentIndex >= movies.length - 1) {
             setShowWinner(true);
+            if (onVote) {
+                // If in Watch Party mode, submit votes
+                // We need to pass the IDs of liked movies. 
+                // Note: likedMovies state update is async, so we calculate the final list here
+                const finalLiked = direction === 'right'
+                    ? [...likedMovies, movies[currentIndex]]
+                    : likedMovies;
+                onVote(finalLiked.map(m => m.id));
+            }
         } else {
             setCurrentIndex(prev => prev + 1);
         }
@@ -105,6 +131,7 @@ export default function SwipeEliminator({ isOpen, onClose, onMovieSelect }: Swip
                         <Trophy size={64} className="text-yellow-500" />
                         <h3 className="text-2xl font-bold">Session Complete!</h3>
                         <p className="text-muted-foreground">You liked {likedMovies.length} movies.</p>
+                        {onVote && <p className="text-sm text-green-400">Votes submitted! Waiting for others...</p>}
 
                         <div className="w-full flex-1 overflow-y-auto space-y-3 pr-2">
                             {likedMovies.map(movie => (
@@ -125,18 +152,20 @@ export default function SwipeEliminator({ isOpen, onClose, onMovieSelect }: Swip
                             )}
                         </div>
 
-                        <button
-                            onClick={fetchMovies}
-                            className="flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 rounded-full transition-colors"
-                        >
-                            <RotateCcw size={20} />
-                            Start Over
-                        </button>
+                        {!onVote && (
+                            <button
+                                onClick={fetchMovies}
+                                className="flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 rounded-full transition-colors"
+                            >
+                                <RotateCcw size={20} />
+                                Start Over
+                            </button>
+                        )}
                     </motion.div>
                 ) : (
                     <div className="relative w-full h-full">
                         <AnimatePresence>
-                            {movies[currentIndex] && (
+                            {movies.length > 0 && movies[currentIndex] ? (
                                 <motion.div
                                     key={movies[currentIndex].id}
                                     style={{ x, rotate, opacity, background }}
@@ -190,24 +219,38 @@ export default function SwipeEliminator({ isOpen, onClose, onMovieSelect }: Swip
                                         </p>
                                     </div>
                                 </motion.div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-full text-center p-6 space-y-4">
+                                    <Film size={48} className="text-muted-foreground" />
+                                    <h3 className="text-xl font-bold">No Movies Found</h3>
+                                    <p className="text-muted-foreground">We couldn't load any movies for you to swipe.</p>
+                                    <button
+                                        onClick={fetchMovies}
+                                        className="px-6 py-2 bg-primary rounded-full font-bold hover:bg-primary/90 transition-colors"
+                                    >
+                                        Try Again
+                                    </button>
+                                </div>
                             )}
                         </AnimatePresence>
 
-                        {/* Controls */}
-                        <div className="absolute -bottom-24 w-full flex justify-center gap-8">
-                            <button
-                                onClick={() => handleSwipe('left')}
-                                className="w-16 h-16 bg-card border border-red-500/50 text-red-500 rounded-full flex items-center justify-center shadow-lg hover:bg-red-500 hover:text-white transition-all transform hover:scale-110"
-                            >
-                                <X size={32} />
-                            </button>
-                            <button
-                                onClick={() => handleSwipe('right')}
-                                className="w-16 h-16 bg-card border border-green-500/50 text-green-500 rounded-full flex items-center justify-center shadow-lg hover:bg-green-500 hover:text-white transition-all transform hover:scale-110"
-                            >
-                                <Heart size={32} fill="currentColor" />
-                            </button>
-                        </div>
+                        {/* Controls - Only show if movies exist */}
+                        {movies.length > 0 && (
+                            <div className="absolute -bottom-24 w-full flex justify-center gap-8">
+                                <button
+                                    onClick={() => handleSwipe('left')}
+                                    className="w-16 h-16 bg-card border border-red-500/50 text-red-500 rounded-full flex items-center justify-center shadow-lg hover:bg-red-500 hover:text-white transition-all transform hover:scale-110"
+                                >
+                                    <X size={32} />
+                                </button>
+                                <button
+                                    onClick={() => handleSwipe('right')}
+                                    className="w-16 h-16 bg-card border border-green-500/50 text-green-500 rounded-full flex items-center justify-center shadow-lg hover:bg-green-500 hover:text-white transition-all transform hover:scale-110"
+                                >
+                                    <Heart size={32} fill="currentColor" />
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

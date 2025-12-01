@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, LayoutGrid, Shuffle, ArrowRight } from 'lucide-react';
-import toast from 'react-hot-toast';
+
 
 interface DiscoveryHeroProps {
     onOpenChat: () => void;
@@ -10,7 +9,7 @@ interface DiscoveryHeroProps {
 }
 
 export default function DiscoveryHero({ onOpenChat, onScrollToCategories, onSurpriseMe }: DiscoveryHeroProps) {
-    const [isHovered, setIsHovered] = useState<number | null>(null);
+
 
     const cards = [
         {
@@ -69,22 +68,33 @@ export default function DiscoveryHero({ onOpenChat, onScrollToCategories, onSurp
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 + (index * 0.1) }}
-                        onMouseEnter={() => setIsHovered(card.id)}
-                        onMouseLeave={() => setIsHovered(null)}
+                        // onMouseEnter={() => setIsHovered(card.id)}
+                        // onMouseLeave={() => setIsHovered(null)}
                         onClick={card.action}
-                        className="relative group cursor-pointer"
+                        className="relative group cursor-pointer h-[400px]"
                     >
-                        <div className={`absolute inset-0 bg-gradient-to-br ${card.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500 rounded-2xl blur-xl`} />
+                        <div className="absolute inset-0 rounded-2xl overflow-hidden">
+                            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors z-10" />
+                            <img
+                                src={
+                                    card.id === 1 ? "https://images.unsplash.com/photo-1535905557558-afc4877a26fc?auto=format&fit=crop&q=80&w=800" : // Mood/Books/Cozy
+                                        card.id === 2 ? "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&q=80&w=800" : // Cinema/Grid
+                                            "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?auto=format&fit=crop&q=80&w=800" // Popcorn/Fun
+                                }
+                                alt={card.title}
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            />
+                        </div>
 
-                        <div className="relative h-full bg-card/50 border border-white/10 hover:border-white/20 p-8 rounded-2xl transition-all duration-300 hover:-translate-y-1 flex flex-col items-center text-center backdrop-blur-sm">
-                            <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${card.color} flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                                <card.icon size={32} className="text-white" />
+                        <div className="relative z-20 h-full p-8 flex flex-col justify-end items-start text-left">
+                            <div className={`w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center mb-4 border border-white/20 group-hover:scale-110 transition-transform`}>
+                                <card.icon size={24} className="text-white" />
                             </div>
 
-                            <h3 className="text-2xl font-bold mb-3">{card.title}</h3>
-                            <p className="text-gray-400 mb-8 flex-grow">{card.description}</p>
+                            <h3 className="text-3xl font-bold mb-2 text-white">{card.title}</h3>
+                            <p className="text-gray-200 mb-6 font-medium">{card.description}</p>
 
-                            <button className={`flex items-center gap-2 px-6 py-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all group-hover:bg-gradient-to-r ${card.color} group-hover:border-transparent`}>
+                            <button className={`flex items-center gap-2 px-6 py-3 rounded-full bg-white text-black font-bold transition-all hover:bg-gray-200 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 duration-300`}>
                                 <span className="font-medium">{card.buttonText}</span>
                                 <ArrowRight size={16} />
                             </button>

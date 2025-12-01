@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Play, Plus, Heart, Share2, Star, Calendar, Clock } from 'lucide-react';
 import { MovieDetails, getImageUrl, IMAGE_SIZES } from '@/services/tmdb';
 import tmdbApi from '@/services/tmdb';
@@ -20,6 +20,7 @@ export default function MovieDetailModal({
     const [movie, setMovie] = useState<MovieDetails | null>(null);
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'overview' | 'cast' | 'similar'>('overview');
+    const [isFavorite, setIsFavorite] = useState(false);
 
     useEffect(() => {
         if (!movieId) {
@@ -32,6 +33,8 @@ export default function MovieDetailModal({
             try {
                 const data = await tmdbApi.getMovieDetails(movieId);
                 setMovie(data);
+                checkIfFavorite(movieId);
+                addToHistory(data);
             } catch (error) {
                 console.error('Failed to fetch movie details:', error);
                 toast.error('Failed to load movie details');
@@ -43,6 +46,82 @@ export default function MovieDetailModal({
 
         fetchMovieDetails();
     }, [movieId, onClose]);
+
+    const checkIfFavorite = async (id: number) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('http://localhost:5000/api/movies/favorites', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+                const isFav = data.data.some((m: any) => m.movieId === id.toString());
+                setIsFavorite(isFav);
+            }
+        } catch (error) {
+            console.error('Error checking favorite:', error);
+        }
+    };
+
+    const addToHistory = async (movieData: MovieDetails) => {
+        try {
+            const token = localStorage.getItem('token');
+            await fetch('http://localhost:5000/api/movies/history', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    movieId: movieData.id.toString(),
+                    title: movieData.title,
+                    year: movieData.release_date?.split('-')[0],
+                    poster: movieData.poster_path
+                })
+            });
+        } catch (error) {
+            console.error('Error adding to history:', error);
+        }
+    };
+
+    const toggleFavorite = async () => {
+        if (!movie) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            if (isFavorite) {
+                await fetch(`http://localhost:5000/api/movies/favorites/${movie.id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                setIsFavorite(false);
+                toast.success('Removed from Favorites');
+            } else {
+                await fetch('http://localhost:5000/api/movies/favorites', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        movieId: movie.id.toString(),
+                        title: movie.title,
+                        year: movie.release_date?.split('-')[0],
+                        poster: movie.poster_path,
+                        overview: movie.overview,
+                        rating: movie.vote_average,
+                        releaseDate: movie.release_date,
+                        genres: movie.genres?.map(g => g.name)
+                    })
+                });
+                setIsFavorite(true);
+                toast.success('Added to Favorites');
+            }
+        } catch (error) {
+            console.error('Error toggling favorite:', error);
+            toast.error('Failed to update favorites');
+        }
+    };
 
     // Handle ESC key
     useEffect(() => {
@@ -156,15 +235,25 @@ export default function MovieDetailModal({
                                             <Plus size={18} />
                                             Watchlist
                                         </button>
-                                        <button className="p-3 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
-                                            <Heart size={18} />
+                                        <button
+                                            onClick={toggleFavorite}
+                                            className={`p-3 rounded-lg transition-colors ${isFavorite ? 'bg-pink-500/20 text-pink-500 hover:bg-pink-500/30' : 'bg-white/10 hover:bg-white/20'}`}
+                                        >
+                                            <Heart size={18} className={isFavorite ? 'fill-pink-500' : ''} />
                                         </button>
                                         <button
                                             onClick={() => {
-                                                navigator.clipboard.writeText(window.location.href);
-                                                toast.success('Link copied to clipboard!');
+                                                const url = `${window.location.origin}/movie/${movie.id}`;
+                                                navigator.clipboard.writeText(url);
+                                                toast.success(
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="font-bold">Link Copied!</span>
+                                                        <span className="text-xs">Share this movie with friends.</span>
+                                                    </div>
+                                                );
                                             }}
                                             className="p-3 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                                            title="Share Movie"
                                         >
                                             <Share2 size={18} />
                                         </button>

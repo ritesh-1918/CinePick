@@ -14,7 +14,7 @@ const ActivitySchema = new mongoose.Schema({
     },
     movieId: {
         type: Number,
-        required: true
+        required: false
     },
     movieTitle: String,
     moviePoster: String,

@@ -79,6 +79,14 @@ export const tmdbApi = {
         return response.data.data;
     },
 
+    // Get popular movies
+    getPopular: async (page: number = 1) => {
+        const response = await axios.get(`${API_BASE_URL}/popular`, {
+            params: { page }
+        });
+        return response.data.data;
+    },
+
     // Get top rated movies
     getTopRated: async (page: number = 1) => {
         const response = await axios.get(`${API_BASE_URL}/top-rated`, {

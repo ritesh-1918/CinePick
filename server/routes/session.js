@@ -27,10 +27,18 @@ router.post('/create', auth, async (req, res) => {
         // BETTER: The host client fetches movies and sends them in create, OR we fetch here.
         // Let's keep it simple: Host sends initial movies or we fetch trending.
 
+        // Fetch user details to get name
+        const User = require('../models/User');
+        const user = await User.findById(req.userId);
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
         const session = new Session({
             code,
-            hostId: req.user.id,
-            users: [{ userId: req.user.id, name: req.user.name }],
+            hostId: user._id,
+            users: [{ userId: user._id, name: user.name }],
             movies: req.body.movies || [], // Expect client to send movies or we default
             votes: {},
             status: 'waiting'
@@ -59,9 +67,14 @@ router.post('/join', auth, async (req, res) => {
         }
 
         // Check if user already joined
-        const existingUser = session.users.find(u => u.userId.toString() === req.user.id);
+        const existingUser = session.users.find(u => u.userId.toString() === req.userId);
         if (!existingUser) {
-            session.users.push({ userId: req.user.id, name: req.user.name });
+            // Fetch user to get name
+            const User = require('../models/User');
+            const user = await User.findById(req.userId);
+            if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+            session.users.push({ userId: req.userId, name: user.name });
             await session.save();
         }
 
@@ -79,7 +92,7 @@ router.post('/start', auth, async (req, res) => {
         const session = await Session.findOne({ code });
 
         if (!session) return res.status(404).json({ success: false, message: 'Session not found' });
-        if (session.hostId.toString() !== req.user.id) {
+        if (session.hostId.toString() !== req.userId) {
             return res.status(403).json({ success: false, message: 'Only host can start' });
         }
 
@@ -108,8 +121,8 @@ router.post('/vote', auth, async (req, res) => {
                 session.votes.set(movieIdStr, []);
             }
             const voters = session.votes.get(movieIdStr);
-            if (!voters.includes(req.user.id)) {
-                voters.push(req.user.id);
+            if (!voters.includes(req.userId)) {
+                voters.push(req.userId);
                 session.votes.set(movieIdStr, voters);
             }
         });

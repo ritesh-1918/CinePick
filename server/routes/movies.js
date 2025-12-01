@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const SavedMovie = require('../models/SavedMovie');
-const WatchHistory = require('../models/WatchHistory');
+const WatchHistory = require('../models/UserWatchHistory');
+const Favorite = require('../models/Favorite');
 
 // @route   GET /api/movies/saved
 // @desc    Get user's saved movies
@@ -144,6 +145,88 @@ router.delete('/history/:id', auth, async (req, res) => {
         });
     } catch (error) {
         console.error('Error removing from history:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
+    }
+});
+
+// @route   GET /api/movies/favorites
+// @desc    Get user's favorite movies
+// @access  Private
+router.get('/favorites', auth, async (req, res) => {
+    try {
+        const favorites = await Favorite.find({ userId: req.userId }).sort({ favoritedAt: -1 });
+        res.json({
+            success: true,
+            data: favorites
+        });
+    } catch (error) {
+        console.error('Error fetching favorites:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
+    }
+});
+
+// @route   POST /api/movies/favorites
+// @desc    Add a movie to favorites
+// @access  Private
+router.post('/favorites', auth, async (req, res) => {
+    try {
+        const { movieId, title, year, poster, overview, genres, rating, releaseDate } = req.body;
+
+        // Check if already favorited
+        const existing = await Favorite.findOne({ userId: req.userId, movieId });
+        if (existing) {
+            return res.status(400).json({
+                success: false,
+                message: 'Movie already in favorites'
+            });
+        }
+
+        const favorite = new Favorite({
+            userId: req.userId,
+            movieId,
+            title,
+            year,
+            posterUrl: poster,
+            overview,
+            genres,
+            rating,
+            releaseDate
+        });
+
+        await favorite.save();
+
+        res.json({
+            success: true,
+            message: 'Added to favorites',
+            data: favorite
+        });
+    } catch (error) {
+        console.error('Error adding to favorites:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
+    }
+});
+
+// @route   DELETE /api/movies/favorites/:movieId
+// @desc    Remove a movie from favorites by Movie ID
+// @access  Private
+router.delete('/favorites/:movieId', auth, async (req, res) => {
+    try {
+        await Favorite.findOneAndDelete({ userId: req.userId, movieId: req.params.movieId });
+        res.json({
+            success: true,
+            message: 'Movie removed from favorites'
+        });
+    } catch (error) {
+        console.error('Error removing from favorites:', error);
         res.status(500).json({
             success: false,
             message: 'Server error'

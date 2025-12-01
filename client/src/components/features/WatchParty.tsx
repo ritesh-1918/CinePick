@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Copy, Play, Trophy, Film, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-// import SwipeEliminator from './SwipeEliminator'; // Unused for now
+import SwipeEliminator from './SwipeEliminator';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 
@@ -105,6 +105,24 @@ export default function WatchParty({ isOpen, onClose }: WatchPartyProps) {
         }
     };
 
+    const handleVote = async (likedMovieIds: number[]) => {
+        if (!session) return;
+        try {
+            const token = localStorage.getItem('token');
+            await axios.post('http://localhost:5000/api/session/vote', {
+                code: session.code,
+                likedMovieIds
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            toast.success('Votes submitted!');
+            // Wait for results or polling to update status
+        } catch (error) {
+            console.error('Vote error:', error);
+            toast.error('Failed to submit votes');
+        }
+    };
+
     const startVoting = async () => {
         if (!session) return;
         try {
@@ -113,6 +131,7 @@ export default function WatchParty({ isOpen, onClose }: WatchPartyProps) {
                 headers: { Authorization: `Bearer ${token}` }
             });
             // Polling will catch the status change
+            fetchSessionStatus(); // Immediate check
         } catch (error) {
             console.error('Start error:', error);
             toast.error('Failed to start voting');
@@ -234,15 +253,13 @@ export default function WatchParty({ isOpen, onClose }: WatchPartyProps) {
 
                     {mode === 'voting' && (
                         <motion.div key="voting" className="w-full h-[60vh]">
-                            {/* Reuse SwipeEliminator logic but modified for session */}
-                            {/* For MVP, we can just mount SwipeEliminator here if we refactor it to accept external movies/control */}
-                            {/* Or we just show a placeholder for now as I need to refactor SwipeEliminator to be controlled */}
-                            <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-                                <Film size={48} className="text-primary animate-bounce" />
-                                <h2 className="text-2xl font-bold">Voting in Progress!</h2>
-                                <p className="text-muted-foreground">This feature is partially implemented. <br /> Imagine everyone swiping on the same movies right now.</p>
-                                <button onClick={onClose} className="px-4 py-2 bg-white/10 rounded-lg">Close Demo</button>
-                            </div>
+                            <SwipeEliminator
+                                isOpen={true}
+                                onClose={onClose}
+                                onMovieSelect={() => { }}
+                                initialMovies={session?.movies}
+                                onVote={handleVote}
+                            />
                         </motion.div>
                     )}
                 </AnimatePresence>

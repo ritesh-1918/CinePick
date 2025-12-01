@@ -6,6 +6,8 @@ const auth = require('../middleware/auth');
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+const axios = require('axios');
+
 // @route   POST /api/chatbot
 // @desc    Handle chatbot queries
 // @access  Private
@@ -20,6 +22,15 @@ router.post('/', auth, async (req, res) => {
             });
         }
 
+        // Fetch trending movies for context
+        let trendingMovies = [];
+        try {
+            const tmdbRes = await axios.get(`https://api.themoviedb.org/3/trending/movie/week?api_key=${process.env.TMDB_API_KEY}`);
+            trendingMovies = tmdbRes.data.results.slice(0, 10).map(m => `${m.title} (ID: ${m.id})`);
+        } catch (err) {
+            console.error('Failed to fetch trending for chatbot:', err.message);
+        }
+
         // Initialize the model
         const model = genAI.getGenerativeModel({
             model: "gemini-2.0-flash",
@@ -29,9 +40,16 @@ router.post('/', auth, async (req, res) => {
             1. Help users navigate the website (Home, Discovery, Library, Profile, etc.).
             2. Explain features like the "Mood-based Picker" and "AI Recommendations".
             3. Assist with account issues (Login, Signup, Forgot Password).
+            4. Recommend movies based on the user's request.
             
-            IMPORTANT: You must ONLY answer questions related to the CinePick website and movies. 
-            If a user asks about general topics (e.g., math, coding, history) unrelated to movies or the app, politely refuse and steer them back to CinePick.
+            Here are the current top trending movies you can recommend:
+            ${trendingMovies.join(', ')}
+
+            IMPORTANT: 
+            - When recommending a movie, ALWAYS format it as a link like this: [Movie Title](/movie/MOVIE_ID). 
+            - Example: "You should watch [Inception](/movie/27205)."
+            - Only answer questions related to the CinePick website and movies. 
+            - If a user asks about general topics (e.g., math, coding, history) unrelated to movies or the app, politely refuse and steer them back to CinePick.
             
             Website Structure:
             - Home: Landing page with "Find a Movie" button.

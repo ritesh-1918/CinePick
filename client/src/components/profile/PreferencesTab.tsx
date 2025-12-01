@@ -16,32 +16,32 @@ const GENRES = [
 const MOODS = ['Happy', 'Sad', 'Excited', 'Relaxed', 'Adventurous', 'Romantic', 'Thrilling', 'Nostalgic'];
 
 const customStyles = {
-    control: (base) => ({
+    control: (base: any) => ({
         ...base,
         background: 'rgba(255, 255, 255, 0.05)',
         borderColor: 'rgba(255, 255, 255, 0.1)',
         color: 'white',
     }),
-    menu: (base) => ({
+    menu: (base: any) => ({
         ...base,
         background: '#1a1a1a',
         border: '1px solid rgba(255, 255, 255, 0.1)',
     }),
-    option: (base, state) => ({
+    option: (base: any, state: any) => ({
         ...base,
         background: state.isFocused ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
         color: 'white',
     }),
-    multiValue: (base) => ({
+    multiValue: (base: any) => ({
         ...base,
         background: 'rgba(229, 9, 20, 0.2)',
         border: '1px solid rgba(229, 9, 20, 0.3)',
     }),
-    multiValueLabel: (base) => ({
+    multiValueLabel: (base: any) => ({
         ...base,
         color: 'white',
     }),
-    multiValueRemove: (base) => ({
+    multiValueRemove: (base: any) => ({
         ...base,
         color: 'white',
         ':hover': {
@@ -51,7 +51,11 @@ const customStyles = {
     }),
 };
 
-export default function PreferencesTab({ profileData }) {
+interface PreferencesTabProps {
+    profileData: any;
+}
+
+export default function PreferencesTab({ profileData }: PreferencesTabProps) {
     const [preferences, setPreferences] = useState(profileData?.preferences || {});
     const [saving, setSaving] = useState(false);
 
@@ -100,7 +104,7 @@ export default function PreferencesTab({ profileData }) {
                                 placeholder={`Select genres for ${mood} mood...`}
                                 onChange={(selected) => {
                                     const newMapping = preferences.moodGenreMapping || [];
-                                    const moodIndex = newMapping.findIndex(m => m.mood === mood);
+                                    const moodIndex = newMapping.findIndex((m: any) => m.mood === mood);
                                     const genres = selected.map(opt => opt.value);
 
                                     if (moodIndex >= 0) {
