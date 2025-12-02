@@ -160,28 +160,46 @@ router.put('/:userId', auth, async (req, res) => {
     }
 });
 
-/** Cloudinary Config */
-const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
+// Cloudinary Config (Lazy Loaded to prevent startup crash if missing)
+let uploadMiddleware;
 
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
-});
+const getUploadMiddleware = () => {
+    if (uploadMiddleware) return uploadMiddleware;
 
-const storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-        folder: 'cinepick_avatars',
-        allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
-        transformation: [{ width: 500, height: 500, crop: 'limit' }]
+    try {
+        const cloudinary = require('cloudinary').v2;
+        const { CloudinaryStorage } = require('multer-storage-cloudinary');
+
+        cloudinary.config({
+            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+            api_key: process.env.CLOUDINARY_API_KEY,
+            api_secret: process.env.CLOUDINARY_API_SECRET
+        });
+
+        const storage = new CloudinaryStorage({
+            cloudinary: cloudinary,
+            params: {
+                folder: 'cinepick_avatars',
+                allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+                transformation: [{ width: 500, height: 500, crop: 'limit' }]
+            }
+        });
+
+        uploadMiddleware = multer({ storage: storage });
+        return uploadMiddleware;
+    } catch (error) {
+        console.error('Failed to initialize Cloudinary:', error);
+        return null;
     }
-});
+};
 
-const upload = multer({ storage: storage });
-
-router.post('/avatar', auth, upload.single('avatar'), async (req, res) => {
+router.post('/avatar', auth, (req, res, next) => {
+    const upload = getUploadMiddleware();
+    if (!upload) {
+        return res.status(500).json({ success: false, message: 'Upload service unavailable' });
+    }
+    upload.single('avatar')(req, res, next);
+}, async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
         const user = await User.findById(req.userId);
