@@ -3,6 +3,7 @@ import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-mo
 import { X, Heart, Trophy, RotateCcw, Film } from 'lucide-react';
 import tmdbApi, { Movie } from '@/services/tmdb';
 import toast from 'react-hot-toast';
+import { useSocket } from '@/context/SocketContext';
 
 interface SwipeEliminatorProps {
     isOpen: boolean;
@@ -10,9 +11,10 @@ interface SwipeEliminatorProps {
     onMovieSelect: (movieId: number) => void;
     initialMovies?: Movie[]; // For Watch Party
     onVote?: (likedMovieIds: number[]) => void; // For Watch Party
+    roomId?: string; // For Socket Room
 }
 
-export default function SwipeEliminator({ isOpen, onClose, onMovieSelect, initialMovies, onVote }: SwipeEliminatorProps) {
+export default function SwipeEliminator({ isOpen, onClose, onMovieSelect, initialMovies, onVote, roomId }: SwipeEliminatorProps) {
     const [movies, setMovies] = useState<Movie[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [likedMovies, setLikedMovies] = useState<Movie[]>([]);
@@ -28,6 +30,8 @@ export default function SwipeEliminator({ isOpen, onClose, onMovieSelect, initia
         [-200, 0, 200],
         ["rgba(239, 68, 68, 0.2)", "rgba(0,0,0,0)", "rgba(34, 197, 94, 0.2)"]
     );
+
+    const { voteMovie, startSession } = useSocket();
 
     useEffect(() => {
         if (isOpen) {
@@ -46,21 +50,23 @@ export default function SwipeEliminator({ isOpen, onClose, onMovieSelect, initia
     const fetchMovies = async () => {
         setLoading(true);
         try {
-            // Fetch popular movies or a specific mix
             const response = await tmdbApi.getTrending('week');
-            // Handle both array (if changed later) and object with results
             const results = Array.isArray(response) ? response : response?.results;
 
             if (results && results.length > 0) {
-                // Shuffle array
-                const shuffled = [...results].sort(() => 0.5 - Math.random());
-                setMovies(shuffled.slice(0, 10)); // Take top 10 for the session
+                const shuffled = [...results].sort(() => 0.5 - Math.random()).slice(0, 10);
+                setMovies(shuffled);
                 setCurrentIndex(0);
                 setLikedMovies([]);
                 setShowWinner(false);
+
+                // If we are in a room (roomId prop exists), emit these movies to start session for everyone
+                if (roomId) {
+                    startSession(roomId, shuffled);
+                }
             } else {
                 toast.error('No movies found to swipe on.');
-                setMovies([]); // Ensure empty state
+                setMovies([]);
             }
         } catch (error) {
             console.error('Swipe Error:', error);
@@ -72,18 +78,22 @@ export default function SwipeEliminator({ isOpen, onClose, onMovieSelect, initia
     };
 
     const handleSwipe = (direction: 'left' | 'right') => {
+        const currentMovie = movies[currentIndex];
+
         if (direction === 'right') {
-            setLikedMovies(prev => [...prev, movies[currentIndex]]);
+            setLikedMovies(prev => [...prev, currentMovie]);
+        }
+
+        // Emit vote if in room
+        if (roomId) {
+            voteMovie(roomId, currentMovie.id, direction === 'right' ? 'like' : 'dislike');
         }
 
         if (currentIndex >= movies.length - 1) {
             setShowWinner(true);
             if (onVote) {
-                // If in Watch Party mode, submit votes
-                // We need to pass the IDs of liked movies. 
-                // Note: likedMovies state update is async, so we calculate the final list here
                 const finalLiked = direction === 'right'
-                    ? [...likedMovies, movies[currentIndex]]
+                    ? [...likedMovies, currentMovie]
                     : likedMovies;
                 onVote(finalLiked.map(m => m.id));
             }

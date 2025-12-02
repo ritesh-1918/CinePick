@@ -121,10 +121,22 @@ app.get('/', (req, res) => {
     res.send('CinePick API is running');
 });
 
+const http = require('http');
+const { initializeSocket } = require('./socketHandler');
+
+const server = http.createServer(app);
+const io = initializeSocket(server);
+
+// Export io to be used in routes if needed
+app.set('io', io);
+
 if (process.env.NODE_ENV !== 'production') {
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
         console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
 }
 
-module.exports = app;
+// For Vercel, we might need to export the app, but for socket.io to work on Vercel
+// we typically need a separate server or use a service like Pusher.
+// However, for standard deployment:
+module.exports = server;

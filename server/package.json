@@ -28,6 +28,7 @@
         "multer": "^2.0.2",
         "multer-storage-cloudinary": "^4.0.0",
         "nodemailer": "^7.0.10",
+        "socket.io": "^4.8.1",
         "uuid": "^13.0.0"
     },
     "devDependencies": {
