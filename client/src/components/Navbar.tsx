@@ -25,7 +25,7 @@ export default function Navbar() {
         const fetchProfileImage = async () => {
             if (!user) return;
             try {
-                const res = await fetch(`http://localhost:5000/api/profile/${user.id}`, {
+                const res = await fetch(`/api/profile/${user.id}`, {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
                 });
                 const data = await res.json();

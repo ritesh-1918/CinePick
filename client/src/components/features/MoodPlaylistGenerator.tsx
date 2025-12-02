@@ -28,7 +28,7 @@ export default function MoodPlaylistGenerator({ isOpen, onClose, onMovieSelect }
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.post('http://localhost:5000/api/ai/playlist', {
+            const res = await axios.post('/api/ai/playlist', {
                 mood,
                 specificRequest
             }, {

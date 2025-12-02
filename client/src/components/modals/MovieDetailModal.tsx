@@ -50,7 +50,7 @@ export default function MovieDetailModal({
     const checkIfFavorite = async (id: number) => {
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:5000/api/movies/favorites', {
+            const res = await fetch('/api/movies/favorites', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -66,7 +66,7 @@ export default function MovieDetailModal({
     const addToHistory = async (movieData: MovieDetails) => {
         try {
             const token = localStorage.getItem('token');
-            await fetch('http://localhost:5000/api/movies/history', {
+            await fetch('/api/movies/history', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -90,14 +90,14 @@ export default function MovieDetailModal({
         try {
             const token = localStorage.getItem('token');
             if (isFavorite) {
-                await fetch(`http://localhost:5000/api/movies/favorites/${movie.id}`, {
+                await fetch(`/api/movies/favorites/${movie.id}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 setIsFavorite(false);
                 toast.success('Removed from Favorites');
             } else {
-                await fetch('http://localhost:5000/api/movies/favorites', {
+                await fetch('/api/movies/favorites', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

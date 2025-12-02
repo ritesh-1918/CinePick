@@ -235,7 +235,7 @@ export default function Dashboard() {
                 toast.error('Please login to add to watchlist');
                 return;
             }
-            await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/watchlist/${user.id}/default/add`, {
+            await fetch(`/api/watchlist/${user.id}/default/add`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ movieId: String(movie.id) })

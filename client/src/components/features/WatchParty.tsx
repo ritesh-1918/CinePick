@@ -45,7 +45,7 @@ export default function WatchParty({ isOpen, onClose }: WatchPartyProps) {
         if (!session) return;
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.get(`http://localhost:5000/api/session/${session.code}`, {
+            const res = await axios.get(`/api/session/${session.code}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
@@ -65,7 +65,7 @@ export default function WatchParty({ isOpen, onClose }: WatchPartyProps) {
         try {
             const token = localStorage.getItem('token');
             // We could pass initial movies here, but let's rely on backend default for now
-            const res = await axios.post('http://localhost:5000/api/session/create', {}, {
+            const res = await axios.post('/api/session/create', {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
@@ -88,7 +88,7 @@ export default function WatchParty({ isOpen, onClose }: WatchPartyProps) {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.post('http://localhost:5000/api/session/join', { code: sessionCode }, {
+            const res = await axios.post('/api/session/join', { code: sessionCode }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
@@ -109,7 +109,7 @@ export default function WatchParty({ isOpen, onClose }: WatchPartyProps) {
         if (!session) return;
         try {
             const token = localStorage.getItem('token');
-            await axios.post('http://localhost:5000/api/session/vote', {
+            await axios.post('/api/session/vote', {
                 code: session.code,
                 likedMovieIds
             }, {
@@ -127,7 +127,7 @@ export default function WatchParty({ isOpen, onClose }: WatchPartyProps) {
         if (!session) return;
         try {
             const token = localStorage.getItem('token');
-            await axios.post('http://localhost:5000/api/session/start', { code: session.code }, {
+            await axios.post('/api/session/start', { code: session.code }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             // Polling will catch the status change

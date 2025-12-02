@@ -18,7 +18,7 @@ export default function PickForMeButton({ onPick }: PickForMeButtonProps) {
         setResult(null);
 
         try {
-            const response = await fetch('http://localhost:5000/api/ai/pick-one', {
+            const response = await fetch('/api/ai/pick-one', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`

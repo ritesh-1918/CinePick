@@ -15,7 +15,7 @@ export default function SurpriseMeButton({ onMovieSelect }: SurpriseMeButtonProp
 
         try {
             // Fetch popular movies and pick a random one
-            const response = await fetch('http://localhost:5000/api/tmdb/trending?time_window=week');
+            const response = await fetch('/api/tmdb/trending?time_window=week');
             const data = await response.json();
 
             if (data.success && data.data.results && data.data.results.length > 0) {

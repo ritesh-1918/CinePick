@@ -26,7 +26,7 @@ export default function ReviewsTab({ userId }: { userId: string }) {
     useEffect(() => {
         const fetchReviews = async () => {
             try {
-                const res = await fetch(`http://localhost:5000/api/reviews/${userId}`, {
+                const res = await fetch(`/api/reviews/${userId}`, {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
                 });
                 const data = await res.json();

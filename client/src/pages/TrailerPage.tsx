@@ -20,14 +20,14 @@ export default function TrailerPage() {
 
             try {
                 // Fetch movie details for title
-                const movieRes = await fetch(`http://localhost:5000/api/tmdb/movie/${movieId}`);
+                const movieRes = await fetch(`/api/tmdb/movie/${movieId}`);
                 const movieData = await movieRes.json();
                 if (movieData.success) {
                     setMovieTitle(movieData.data.title);
                 }
 
                 // Fetch trailer
-                const response = await fetch(`http://localhost:5000/api/tmdb/movie/${movieId}/videos`);
+                const response = await fetch(`/api/tmdb/movie/${movieId}/videos`);
                 const data = await response.json();
 
                 if (data.success && data.data.results) {

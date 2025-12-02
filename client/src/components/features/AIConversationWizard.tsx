@@ -82,7 +82,7 @@ export default function AIConversationWizard({ isOpen, onClose, onMovieSelect }:
         setError(null);
         try {
             // Call backend API
-            const response = await fetch('http://localhost:5000/api/ai/recommend', {
+            const response = await fetch('/api/ai/recommend', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

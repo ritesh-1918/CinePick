@@ -14,7 +14,7 @@ export default function WatchlistTab({ userId }) {
 
     const fetchWatchlists = async () => {
         try {
-            const res = await fetch(`http://localhost:5000/api/watchlist/${userId}`, {
+            const res = await fetch(`/api/watchlist/${userId}`, {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
             const data = await res.json();
@@ -49,7 +49,7 @@ export default function WatchlistTab({ userId }) {
 
         // API Call
         try {
-            await fetch(`http://localhost:5000/api/watchlist/${userId}/${activeListId}/reorder`, {
+            await fetch(`/api/watchlist/${userId}/${activeListId}/reorder`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -84,8 +84,8 @@ export default function WatchlistTab({ userId }) {
                             key={list.listId}
                             onClick={() => setActiveListId(list.listId)}
                             className={`w-full text-left px-4 py-3 rounded-xl transition-all flex justify-between items-center ${activeListId === list.listId
-                                    ? 'bg-primary text-white shadow-lg shadow-primary/25'
-                                    : 'bg-card/50 hover:bg-white/5 text-muted-foreground hover:text-white'
+                                ? 'bg-primary text-white shadow-lg shadow-primary/25'
+                                : 'bg-card/50 hover:bg-white/5 text-muted-foreground hover:text-white'
                                 }`}
                         >
                             <span className="font-medium">{list.listName}</span>

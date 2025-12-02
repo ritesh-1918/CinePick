@@ -29,7 +29,7 @@ export default function SettingsTab({ profileData }: SettingsTabProps) {
             if (avatarFile) {
                 const form = new FormData();
                 form.append('avatar', avatarFile);
-                await fetch(`http://localhost:5000/api/profile/avatar`, {
+                await fetch(`/api/profile/avatar`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -38,7 +38,7 @@ export default function SettingsTab({ profileData }: SettingsTabProps) {
                 });
             }
             // Update other profile fields
-            const res = await fetch(`http://localhost:5000/api/profile/${profileData._id}`, {
+            const res = await fetch(`/api/profile/${profileData._id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -166,7 +166,7 @@ export default function SettingsTab({ profileData }: SettingsTabProps) {
                     <button onClick={async () => {
                         if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
                             try {
-                                const res = await fetch(`http://localhost:5000/api/profile/${profileData._id}`, {
+                                const res = await fetch(`/api/profile/${profileData._id}`, {
                                     method: 'DELETE',
                                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                                 });

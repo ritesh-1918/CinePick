@@ -94,7 +94,7 @@ export default function Discovery() {
     const handleSaveMovie = async (movie: Movie) => {
         try {
             const token = localStorage.getItem('token');
-            await fetch('http://localhost:5000/api/movies/saved', {
+            await fetch('/api/movies/saved', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

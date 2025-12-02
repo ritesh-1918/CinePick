@@ -71,7 +71,7 @@ export default function Profile() {
             if (!user) return;
 
             try {
-                const res = await fetch(`http://localhost:5000/api/profile/${user.id}`, {
+                const res = await fetch(`/api/profile/${user.id}`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
@@ -166,7 +166,7 @@ export default function Profile() {
                                         const toastId = toast.loading('Uploading profile picture...');
 
                                         try {
-                                            const res = await fetch('http://localhost:5000/api/profile/avatar', {
+                                            const res = await fetch('/api/profile/avatar', {
                                                 method: 'POST',
                                                 headers: {
                                                     'Authorization': `Bearer ${localStorage.getItem('token')}`

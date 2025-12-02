@@ -62,7 +62,7 @@ export default function PreferencesTab({ profileData }: PreferencesTabProps) {
     const handleSave = async () => {
         setSaving(true);
         try {
-            const res = await fetch(`http://localhost:5000/api/profile/${profileData._id}`, {
+            const res = await fetch(`/api/profile/${profileData._id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

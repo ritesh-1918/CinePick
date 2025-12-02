@@ -22,7 +22,7 @@ export default function TrailerModal({ movieId, onClose }: TrailerModalProps) {
             setError(false);
 
             try {
-                const response = await fetch(`http://localhost:5000/api/tmdb/movie/${movieId}/videos`);
+                const response = await fetch(`/api/tmdb/movie/${movieId}/videos`);
                 const data = await response.json();
 
                 if (data.success && data.data.results) {

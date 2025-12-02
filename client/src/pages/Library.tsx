@@ -83,9 +83,9 @@ export default function Library() {
             const token = localStorage.getItem('token');
             let endpoint = '';
 
-            if (activeTab === 'saved') endpoint = 'http://localhost:5000/api/movies/saved';
-            if (activeTab === 'history') endpoint = 'http://localhost:5000/api/movies/history';
-            if (activeTab === 'favorites') endpoint = 'http://localhost:5000/api/movies/favorites';
+            if (activeTab === 'saved') endpoint = '/api/movies/saved';
+            if (activeTab === 'history') endpoint = '/api/movies/history';
+            if (activeTab === 'favorites') endpoint = '/api/movies/favorites';
 
             const res = await fetch(endpoint, {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -108,8 +108,8 @@ export default function Library() {
         const token = localStorage.getItem('token');
         try {
             let endpoint = '';
-            if (activeTab === 'history') endpoint = `http://localhost:5000/api/movies/history/${movieId}`;
-            else if (activeTab === 'favorites') endpoint = `http://localhost:5000/api/movies/favorites/${movieId}`; // Note: movieId here is the _id or tmdbId depending on how we store it. 
+            if (activeTab === 'history') endpoint = `/api/movies/history/${movieId}`;
+            else if (activeTab === 'favorites') endpoint = `/api/movies/favorites/${movieId}`; // Note: movieId here is the _id or tmdbId depending on how we store it. 
             // Actually, for favorites we might want to delete by movieId (TMDB ID) if that's how we track it, or _id.
             // Let's check the API. The API expects /favorites/:movieId (TMDB ID) or /favorites/:id (_id).
             // The previous implementation used _id for saved/history.
@@ -118,7 +118,7 @@ export default function Library() {
             // So it expects the TMDB ID.
             // But wait, the LibraryMovie interface has _id and movieId.
             // If activeTab is favorites, we should pass the movieId (TMDB ID).
-            else endpoint = `http://localhost:5000/api/movies/saved/${movieId}`;
+            else endpoint = `/api/movies/saved/${movieId}`;
 
             // Wait, if I use movieId (TMDB ID) for favorites, I need to pass that.
             // The handleRemove is called with movie._id usually.
