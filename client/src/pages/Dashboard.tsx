@@ -27,7 +27,7 @@ export default function Dashboard() {
     const categoriesRef = useRef<HTMLDivElement>(null);
 
     // Sidebar State
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
 
     // State
     const [isChatOpen, setIsChatOpen] = useState(false);
@@ -284,7 +284,7 @@ export default function Dashboard() {
 
     return (
         <div className={cn(
-            "rounded-md flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-800 w-full flex-1 max-w-7xl mx-auto border border-neutral-200 dark:border-neutral-700 overflow-hidden",
+            "flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-800 w-full flex-1 overflow-hidden",
             "h-screen"
         )}>
             <Sidebar open={open} setOpen={setOpen}>

@@ -3,8 +3,8 @@ const nodemailer = require('nodemailer');
 const sendEmail = async (options) => {
     // Check if email config exists
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.warn('Email configuration missing. Skipping email send.');
-        return;
+        console.error('Email configuration missing. Cannot send email.');
+        throw new Error('Email configuration missing');
     }
 
     // Create a transporter
