@@ -33,7 +33,8 @@ export default function GoogleAuth() {
 
     const handleCredentialResponse = async (response: any) => {
         try {
-            const res = await fetch('/api/auth/google', {
+            const apiUrl = import.meta.env.VITE_API_URL || '';
+            const res = await fetch(`${apiUrl}/api/auth/google`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: response.credential })
