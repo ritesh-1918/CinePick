@@ -27,7 +27,13 @@ export default function Login() {
                 body: JSON.stringify({ email, password }),
             });
 
-            const data = await response.json();
+            let data;
+            try {
+                data = await response.json();
+            } catch (e) {
+                // If response is not JSON (e.g. 500 error HTML), treat as server error
+                throw new Error('Server error. Please check your connection or try again later.');
+            }
 
             if (!response.ok) {
                 throw new Error(data.message || 'Login failed');

@@ -39,7 +39,14 @@ export default function GoogleAuth() {
                 body: JSON.stringify({ token: response.credential })
             });
 
-            const data = await res.json();
+            let data;
+            try {
+                data = await res.json();
+            } catch (e) {
+                console.error("Google Auth: Failed to parse server response");
+                alert("Server error during Google Sign-In. Please try again later.");
+                return;
+            }
 
             if (data.success) {
                 login(data.token, data.user);

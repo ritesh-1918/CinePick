@@ -39,7 +39,12 @@ export default function Signup() {
                 }),
             });
 
-            const data = await response.json();
+            let data;
+            try {
+                data = await response.json();
+            } catch (e) {
+                throw new Error('Server error. Please check your connection or try again later.');
+            }
 
             if (!response.ok) {
                 throw new Error(data.message || 'Signup failed');
