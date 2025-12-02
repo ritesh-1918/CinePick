@@ -13,3 +13,6 @@ uploads/
 *.swp
 *.swo
 *~
+
+# Google Credentials
+server/google-credentials.json

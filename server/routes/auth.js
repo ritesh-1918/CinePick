@@ -222,6 +222,15 @@ router.put('/survey', require('../middleware/auth'), async (req, res) => {
 
         await user.save();
 
+        // Append to Google Sheet
+        const { appendToSheet } = require('../utils/googleSheets');
+        await appendToSheet({
+            userId: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            preferences: user.preferences
+        });
+
         res.json({
             success: true,
             message: 'Preferences updated successfully',

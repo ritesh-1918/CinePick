@@ -17,9 +17,12 @@ import TrailerPage from './pages/TrailerPage';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
+import { SpeedInsights } from "@vercel/speed-insights/react"
+
 function App() {
     return (
         <AuthProvider>
+            <SpeedInsights />
             <Router>
                 <Routes>
                     {/* Public Routes */}
