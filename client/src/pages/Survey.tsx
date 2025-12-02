@@ -26,12 +26,46 @@ export default function Survey() {
         }
     };
 
-    const handleNext = () => {
+    const [submitting, setSubmitting] = useState(false);
+
+    const handleNext = async () => {
         if (step === 1 && selectedGenres.length > 0) {
             setStep(2);
         } else if (step === 2 && selectedMoods.length > 0) {
             // Complete survey
-            navigate('/dashboard');
+            setSubmitting(true);
+            try {
+                const apiUrl = import.meta.env.VITE_API_URL || '';
+                const res = await fetch(`${apiUrl}/api/auth/survey`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        favoriteGenres: selectedGenres,
+                        // We are mapping moods to "favoriteActors" field for now to store them, 
+                        // or we could add a 'moods' field to the schema later. 
+                        // For now, let's just save genres.
+                        // actually, let's just send what we have.
+                        favoriteActors: selectedMoods // Temporary mapping to store mood data
+                    })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    navigate('/dashboard');
+                } else {
+                    console.error('Survey failed:', data.message);
+                    // Force navigate anyway so user isn't stuck
+                    navigate('/dashboard');
+                }
+            } catch (error) {
+                console.error('Survey error:', error);
+                navigate('/dashboard');
+            } finally {
+                setSubmitting(false);
+            }
         }
     };
 
