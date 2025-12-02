@@ -162,9 +162,9 @@ if (process.env.NODE_ENV !== 'production' || process.env.RENDER || process.env.E
     console.log('Socket.io skipped in production (Serverless environment)');
 }
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production' || process.env.RENDER) {
     server.listen(PORT, () => {
-        console.log(`🚀 Server running on http://localhost:${PORT}`);
+        console.log(`🚀 Server running on port ${PORT}`);
     });
 }
 
