@@ -136,7 +136,5 @@ if (process.env.NODE_ENV !== 'production') {
     });
 }
 
-// For Vercel, we might need to export the app, but for socket.io to work on Vercel
-// we typically need a separate server or use a service like Pusher.
-// However, for standard deployment:
-module.exports = server;
+// For Vercel, we must export the Express app
+module.exports = app;

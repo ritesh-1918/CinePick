@@ -95,6 +95,7 @@ router.post('/login', [
     body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email'),
     body('password').notEmpty().withMessage('Password is required')
 ], async (req, res) => {
+    console.log('Login Route Hit', req.body.email);
     try {
         // Validate input
         const errors = validationResult(req);
@@ -295,6 +296,7 @@ const crypto = require('crypto');
 // @desc    Google Sign-In/Sign-Up
 // @access  Public
 router.post('/google', async (req, res) => {
+    console.log('Google Auth Route Hit');
     try {
         const { token } = req.body;
 
