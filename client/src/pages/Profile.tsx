@@ -173,7 +173,11 @@ export default function Profile() {
                         <div className="md:col-span-1 space-y-6">
                             <div className="bg-card/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6 text-center">
                                 <ProfilePictureUpload
-                                    currentImage={profileData?.profileImage || `https://ui-avatars.com/api/?name=${user?.name}&background=random`}
+                                    currentImage={
+                                        (profileData?.profileImage && !profileData.profileImage.includes('localhost'))
+                                            ? profileData.profileImage
+                                            : `https://ui-avatars.com/api/?name=${user?.name}&background=random`
+                                    }
                                     onImageUpdate={(newUrl) => setProfileData(prev => prev ? { ...prev, profileImage: newUrl } : null)}
                                 />
                                 <h2 className="text-xl font-bold mt-4">{displayName}</h2>
