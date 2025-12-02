@@ -67,6 +67,18 @@ router.post('/signup', [
             }
         });
 
+        // Send Welcome Email (Async - don't block response)
+        try {
+            await sendEmail({
+                email: user.email,
+                type: 'WELCOME',
+                name: user.name
+            });
+        } catch (emailError) {
+            console.error('Welcome email failed:', emailError);
+            // Don't fail the request if email fails
+        }
+
     } catch (error) {
         console.error('Signup error:', error);
         res.status(500).json({
@@ -323,9 +335,13 @@ router.post('/google', async (req, res) => {
 
     } catch (error) {
         console.error('Google Auth Error:', error);
+        console.error('Error Message:', error.message);
+        if (error.response) {
+            console.error('Error Response:', error.response.data);
+        }
         res.status(500).json({
             success: false,
-            message: 'Google authentication failed'
+            message: 'Google authentication failed: ' + error.message
         });
     }
 });
@@ -363,7 +379,7 @@ router.post('/forgot-password', async (req, res) => {
         try {
             await sendEmail({
                 email: user.email,
-                subject: 'Password Reset Token',
+                type: 'PASSWORD_RESET',
                 otp: resetToken
             });
 
