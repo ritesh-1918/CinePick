@@ -14,7 +14,7 @@ const connectDB = async () => {
 
     if (!cached.promise) {
         const opts = {
-            bufferCommands: false,
+            // bufferCommands: true, // Default is true, allowing queries to queue until connected
         };
 
         cached.promise = mongoose.connect(process.env.MONGODB_URI, opts).then((mongoose) => {
