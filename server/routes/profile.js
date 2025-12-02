@@ -160,33 +160,35 @@ router.put('/:userId', auth, async (req, res) => {
     }
 });
 
-/** Multer avatar upload */
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const isDev = process.env.NODE_ENV === 'development';
-        const uploadsDir = isDev ? path.join(__dirname, '..', 'uploads') : path.join('/tmp', 'uploads');
-        cb(null, uploadsDir);
-    },
-    filename: (req, file, cb) => cb(null, 'avatar-' + req.userId + path.extname(file.originalname))
+/** Cloudinary Config */
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
 });
-const upload = multer({
-    storage,
-    limits: { fileSize: 5 * 1024 * 1024 },
-    fileFilter: (req, file, cb) => {
-        const filetypes = /jpeg|jpg|png|webp/;
-        const mimetype = filetypes.test(file.mimetype);
-        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-        if (mimetype && extname) return cb(null, true);
-        cb(new Error('Only images are allowed!'));
+
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'cinepick_avatars',
+        allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+        transformation: [{ width: 500, height: 500, crop: 'limit' }]
     }
 });
+
+const upload = multer({ storage: storage });
 
 router.post('/avatar', auth, upload.single('avatar'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
         const user = await User.findById(req.userId);
         if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-        const fileUrl = `${process.env.BASE_URL || 'http://localhost:5000'}/uploads/${req.file.filename}`;
+
+        // Cloudinary returns the URL in req.file.path
+        const fileUrl = req.file.path;
         user.profileImage = fileUrl;
         await user.save();
         res.json({ success: true, message: 'Profile picture updated', fileUrl });
