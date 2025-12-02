@@ -7,7 +7,11 @@ const rooms = {}; // In-memory store for rooms (Note: Will reset on server resta
 const initializeSocket = (server) => {
     io = socketIo(server, {
         cors: {
-            origin: process.env.FRONTEND_URL || "*",
+            origin: [
+                "http://localhost:5173",
+                "https://cine-pick-eight.vercel.app",
+                process.env.FRONTEND_URL
+            ].filter(Boolean),
             methods: ["GET", "POST"],
             credentials: true
         }

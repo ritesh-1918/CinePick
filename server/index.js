@@ -15,9 +15,28 @@ const PORT = process.env.PORT || 3000;
 // connectDB().catch(err => console.error('Failed to connect to MongoDB during startup:', err));
 
 // Middleware
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://cine-pick-eight.vercel.app',
+    process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL || true, // Allow specific origin in production, or all in dev
-    credentials: true // Allow cookies
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1 || !process.env.NODE_ENV === 'production') {
+            callback(null, true);
+        } else {
+            // For now, in production, we might want to be lenient or strict.
+            // Let's be lenient for debugging if the specific origin isn't in the list
+            console.log('Origin not explicitly allowed:', origin);
+            // callback(new Error('Not allowed by CORS')); // Strict
+            callback(null, true); // Lenient for debugging
+        }
+    },
+    credentials: true
 }));
 app.use(express.json());
 app.use(cookieParser());
