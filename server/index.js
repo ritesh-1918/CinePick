@@ -130,8 +130,8 @@ const server = http.createServer(app);
 
 let io;
 // Socket.io requires a persistent server, which Vercel Serverless functions don't provide.
-// We only initialize it in development or if a specific flag is set.
-if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_SOCKETS === 'true') {
+// We only initialize it in development, on Render, or if a specific flag is set.
+if (process.env.NODE_ENV !== 'production' || process.env.RENDER || process.env.ENABLE_SOCKETS === 'true') {
     try {
         const { initializeSocket } = require('./socketHandler');
         io = initializeSocket(server);
