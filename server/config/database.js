@@ -13,11 +13,19 @@ const connectDB = async () => {
     }
 
     if (!cached.promise) {
+        const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
+
+        if (!uri) {
+            console.error('❌ MONGODB_URI or MONGO_URI is not defined in environment variables');
+            // Return a rejected promise or null to prevent crash, but ensure we know it failed
+            return Promise.reject(new Error('Missing MongoDB URI'));
+        }
+
         const opts = {
             // bufferCommands: true, // Default is true, allowing queries to queue until connected
         };
 
-        cached.promise = mongoose.connect(process.env.MONGODB_URI, opts).then((mongoose) => {
+        cached.promise = mongoose.connect(uri, opts).then((mongoose) => {
             console.log(`✅ New MongoDB Connected: ${mongoose.connection.host}`);
             return mongoose;
         });

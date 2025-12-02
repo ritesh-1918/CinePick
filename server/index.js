@@ -11,8 +11,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Connect to MongoDB
-// Connect to MongoDB
-connectDB().catch(err => console.error('Failed to connect to MongoDB during startup:', err));
+// We use a middleware to ensure connection on every request (Serverless pattern)
+// connectDB().catch(err => console.error('Failed to connect to MongoDB during startup:', err));
 
 // Middleware
 app.use(cors({
@@ -21,6 +21,22 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
+
+// Database Connection Middleware
+app.use(async (req, res, next) => {
+    // Skip DB connection for health check to ensure it always returns 200
+    if (req.path === '/api/health') return next();
+
+    try {
+        await connectDB();
+        next();
+    } catch (error) {
+        console.error('DB Connection Middleware Error:', error);
+        // We continue even if DB fails, so that debug routes might still work if they don't depend on DB
+        // But for normal routes, they will likely fail later.
+        next();
+    }
+});
 
 // Ensure uploads directory exists
 const isDev = process.env.NODE_ENV === 'development';
