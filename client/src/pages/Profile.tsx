@@ -214,7 +214,15 @@ export default function Profile() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-muted-foreground">Favorite Genres</label>
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-sm font-medium text-muted-foreground">Favorite Genres</label>
+                                            <button
+                                                onClick={() => navigate('/survey')}
+                                                className="text-xs text-primary hover:underline"
+                                            >
+                                                Retake Survey
+                                            </button>
+                                        </div>
                                         <div className="flex flex-wrap gap-2">
                                             {GENRES.map(genre => (
                                                 <button
