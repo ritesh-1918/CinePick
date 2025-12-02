@@ -6,7 +6,7 @@ export const Logo = () => {
             href="#"
             className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
         >
-            <div className="h-5 w-6 bg-black dark:bg-white rounded-lg flex-shrink-0" />
+            <img src="/logo.png" alt="CinePick Logo" className="h-8 w-auto object-contain" />
             <motion.span
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -24,7 +24,7 @@ export const LogoIcon = () => {
             href="#"
             className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
         >
-            <div className="h-5 w-6 bg-black dark:bg-white rounded-lg flex-shrink-0" />
+            <img src="/logo.png" alt="CinePick Logo" className="h-8 w-auto object-contain" />
         </a>
     );
 };
