@@ -167,14 +167,22 @@ const getUploadMiddleware = () => {
     if (uploadMiddleware) return uploadMiddleware;
 
     try {
+        console.log('Initializing Cloudinary...');
         const cloudinary = require('cloudinary').v2;
         const { CloudinaryStorage } = require('multer-storage-cloudinary');
+
+        if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+            console.error('Missing Cloudinary Environment Variables');
+            return null;
+        }
 
         cloudinary.config({
             cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
             api_key: process.env.CLOUDINARY_API_KEY,
             api_secret: process.env.CLOUDINARY_API_SECRET
         });
+
+        console.log('Cloudinary configured for cloud:', process.env.CLOUDINARY_CLOUD_NAME);
 
         const storage = new CloudinaryStorage({
             cloudinary: cloudinary,

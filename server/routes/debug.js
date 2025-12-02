@@ -78,4 +78,19 @@ router.get('/env', (req, res) => {
     });
 });
 
+// Check Cloudinary Config
+router.get('/cloudinary', (req, res) => {
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+    res.json({
+        hasCloudName: !!cloudName,
+        hasApiKey: !!apiKey,
+        hasApiSecret: !!apiSecret,
+        cloudNamePreview: cloudName ? `${cloudName.substring(0, 3)}...` : 'missing',
+        apiKeyPreview: apiKey ? `${apiKey.substring(0, 3)}...` : 'missing'
+    });
+});
+
 module.exports = router;
