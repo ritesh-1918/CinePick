@@ -126,13 +126,23 @@ app.get('/', (req, res) => {
 });
 
 const http = require('http');
-const { initializeSocket } = require('./socketHandler');
-
 const server = http.createServer(app);
-const io = initializeSocket(server);
 
-// Export io to be used in routes if needed
-app.set('io', io);
+let io;
+// Socket.io requires a persistent server, which Vercel Serverless functions don't provide.
+// We only initialize it in development or if a specific flag is set.
+if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_SOCKETS === 'true') {
+    try {
+        const { initializeSocket } = require('./socketHandler');
+        io = initializeSocket(server);
+        app.set('io', io);
+        console.log('Socket.io initialized');
+    } catch (error) {
+        console.error('Failed to initialize Socket.io:', error);
+    }
+} else {
+    console.log('Socket.io skipped in production (Serverless environment)');
+}
 
 if (process.env.NODE_ENV !== 'production') {
     server.listen(PORT, () => {

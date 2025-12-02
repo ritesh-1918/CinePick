@@ -4,18 +4,31 @@ const fs = require('fs');
 const path = require('path');
 
 let creds;
-const credsPath = path.join(__dirname, '../google-credentials.json');
 
-if (fs.existsSync(credsPath)) {
-    creds = require(credsPath);
-} else if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+// In production (Vercel), we expect credentials via Env Var
+if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
     try {
         creds = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
     } catch (e) {
         console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON', e);
     }
-} else {
-    console.warn('No Google Credentials found (file or env). Sheets integration will fail.');
+}
+// In development, we can try to load from file
+else if (process.env.NODE_ENV === 'development') {
+    const credsPath = path.join(__dirname, '../google-credentials.json');
+    if (fs.existsSync(credsPath)) {
+        // We use fs.readFileSync and JSON.parse instead of require to avoid bundler issues
+        try {
+            const fileContent = fs.readFileSync(credsPath, 'utf8');
+            creds = JSON.parse(fileContent);
+        } catch (e) {
+            console.error('Failed to read google-credentials.json', e);
+        }
+    }
+}
+
+if (!creds) {
+    console.warn('No Google Credentials found. Sheets integration will fail.');
 }
 
 const serviceAccountAuth = creds ? new JWT({
