@@ -1,42 +1,40 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import ProfileTabs from '@/components/profile/ProfileTabs';
-import OverviewTab from '@/components/profile/OverviewTab';
-import WatchlistTab from '@/components/profile/WatchlistTab';
-import HistoryTab from '@/components/profile/HistoryTab';
-import ReviewsTab from '@/components/profile/ReviewsTab';
-import PreferencesTab from '@/components/profile/PreferencesTab';
-import SettingsTab from '@/components/profile/SettingsTab';
-import { Loader2, LayoutDashboard, Compass, Library, User, LogOut } from 'lucide-react';
+import { Loader2, LayoutDashboard, Compass, Library, User, LogOut, Save, Mail, Calendar } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Sidebar, SidebarBody, SidebarLink } from '@/components/ui/sidebar';
 import { Logo, LogoIcon } from '@/components/ui/Logo';
 import { cn } from '@/lib/utils';
+import ProfilePictureUpload from '@/components/profile/ProfilePictureUpload';
 
 interface ProfileData {
     _id: string;
     displayName: string;
     profileImage: string;
     memberSince: string;
-    stats: {
-        totalWatched: number;
-        totalReviews: number;
-        watchlistCount: number;
+    preferences: {
+        favoriteGenres: string[];
     };
-    preferences: any;
-    privacySettings: any;
-    notifications: any;
 }
 
+const GENRES = [
+    "Action", "Adventure", "Animation", "Comedy", "Crime", "Documentary", "Drama",
+    "Family", "Fantasy", "History", "Horror", "Music", "Mystery", "Romance",
+    "Science Fiction", "TV Movie", "Thriller", "War", "Western"
+];
+
 export default function Profile() {
-    const { user, updateUser, logout } = useAuth();
+    const { user, logout } = useAuth();
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('overview');
     const [loading, setLoading] = useState(true);
-    const [profileData, setProfileData] = useState<ProfileData | null>(null);
+    const [saving, setSaving] = useState(false);
     const [open, setOpen] = useState(true);
+
+    // Form State
+    const [profileData, setProfileData] = useState<ProfileData | null>(null);
+    const [displayName, setDisplayName] = useState('');
+    const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
 
     const links = [
         {
@@ -69,32 +67,64 @@ export default function Profile() {
     useEffect(() => {
         const fetchProfile = async () => {
             if (!user) return;
-
             try {
                 const res = await fetch(`/api/profile/${user.id}`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
                 });
                 const data = await res.json();
                 if (data.success && data.data) {
-                    setProfileData(data.data.user);
-                    // Update auth context if profile image changed
-                    if (data.data.user.profileImage && data.data.user.profileImage !== user.profileImage) {
-                        updateUser({ profileImage: data.data.user.profileImage });
-                    }
+                    const userData = data.data.user;
+                    setProfileData(userData);
+                    setDisplayName(userData.displayName || userData.name);
+                    setSelectedGenres(data.data.preferences?.favoriteGenres || []);
                 }
             } catch (error) {
                 console.error('Failed to fetch profile:', error);
+                toast.error('Failed to load profile');
             } finally {
                 setLoading(false);
             }
         };
 
-        if (user) {
-            fetchProfile();
+        if (user) fetchProfile();
+    }, [user]);
+
+    const handleGenreToggle = (genre: string) => {
+        setSelectedGenres(prev =>
+            prev.includes(genre)
+                ? prev.filter(g => g !== genre)
+                : [...prev, genre]
+        );
+    };
+
+    const handleSave = async () => {
+        if (!user) return;
+        setSaving(true);
+        try {
+            const res = await fetch(`/api/profile/${user.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    displayName,
+                    preferences: { favoriteGenres: selectedGenres }
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                toast.success('Profile updated successfully');
+            } else {
+                toast.error(data.message || 'Failed to update profile');
+            }
+        } catch (error) {
+            console.error('Update failed:', error);
+            toast.error('Failed to update profile');
+        } finally {
+            setSaving(false);
         }
-    }, [user, updateUser]);
+    };
 
     if (loading) {
         return (
@@ -133,106 +163,83 @@ export default function Profile() {
             </Sidebar>
 
             <div className="flex-1 flex flex-col overflow-y-auto bg-background text-white p-4 md:p-8">
-                <div className="w-full">
-                    {/* Profile Header */}
-                    <div className="flex flex-col md:flex-row items-center gap-6 mb-8 p-6 bg-card/50 backdrop-blur-sm rounded-2xl border border-white/10">
-                        <div className="relative group">
-                            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-primary/20">
-                                <img
-                                    src={profileData?.profileImage || `https://ui-avatars.com/api/?name=${user?.name}&background=random`}
-                                    alt="Profile"
-                                    className="w-full h-full object-cover"
+                <div className="max-w-4xl mx-auto w-full">
+                    <h1 className="text-3xl font-bold mb-8">My Profile</h1>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {/* Left Column: Identity */}
+                        <div className="md:col-span-1 space-y-6">
+                            <div className="bg-card/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6 text-center">
+                                <ProfilePictureUpload
+                                    currentImage={profileData?.profileImage || `https://ui-avatars.com/api/?name=${user?.name}&background=random`}
+                                    onImageUpdate={(newUrl) => setProfileData(prev => prev ? { ...prev, profileImage: newUrl } : null)}
                                 />
-                            </div>
-                            <label className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full cursor-pointer">
-                                <span className="text-xs font-medium">Change</span>
-                                <input
-                                    type="file"
-                                    className="hidden"
-                                    accept="image/*"
-                                    onChange={async (e) => {
-                                        const file = e.target.files?.[0];
-                                        if (!file) return;
+                                <h2 className="text-xl font-bold mt-4">{displayName}</h2>
+                                <p className="text-muted-foreground text-sm">@{user?.name.replace(/\s+/g, '').toLowerCase()}</p>
 
-                                        // Validate file size (max 5MB)
-                                        if (file.size > 5 * 1024 * 1024) {
-                                            toast.error('Image must be less than 5MB');
-                                            return;
-                                        }
-
-                                        const formData = new FormData();
-                                        formData.append('avatar', file);
-
-                                        const toastId = toast.loading('Uploading profile picture...');
-
-                                        try {
-                                            const res = await fetch('/api/profile/avatar', {
-                                                method: 'POST',
-                                                headers: {
-                                                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                                                },
-                                                body: formData
-                                            });
-                                            const data = await res.json();
-
-                                            if (data.success && profileData) {
-                                                const newImageUrl = data.fileUrl;
-                                                // Update local profile data
-                                                setProfileData({ ...profileData, profileImage: newImageUrl });
-                                                // Update auth context - THIS IS KEY!
-                                                updateUser({ profileImage: newImageUrl });
-                                                toast.success('Profile picture updated!', { id: toastId });
-                                            } else {
-                                                toast.error(data.message || 'Failed to upload image', { id: toastId });
-                                            }
-                                        } catch (error: any) {
-                                            console.error('Upload failed:', error);
-                                            toast.error('Upload failed. Please try again.', { id: toastId });
-                                        }
-                                    }}
-                                />
-                            </label>
-                        </div>
-
-                        <div className="flex-1 text-center md:text-left">
-                            <h1 className="text-3xl font-bold mb-1">{profileData?.displayName || user?.name}</h1>
-                            <p className="text-muted-foreground text-sm mb-4">Member since {new Date(profileData?.memberSince || Date.now()).getFullYear()}</p>
-
-                            <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm">
-                                <div className="px-3 py-1 bg-primary/10 rounded-full border border-primary/20">
-                                    <span className="font-bold text-primary">{profileData?.stats?.totalWatched || 0}</span> Movies Watched
-                                </div>
-                                <div className="px-3 py-1 bg-secondary/10 rounded-full border border-secondary/20">
-                                    <span className="font-bold text-secondary">{profileData?.stats?.watchlistCount || 0}</span> in Watchlist
-                                </div>
-                                <div className="px-3 py-1 bg-accent/10 rounded-full border border-accent/20">
-                                    <span className="font-bold text-accent">{profileData?.stats?.totalReviews || 0}</span> Reviews
+                                <div className="mt-6 space-y-3 text-left">
+                                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                        <Mail className="w-4 h-4" />
+                                        <span className="truncate">{user?.email}</span>
+                                    </div>
+                                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                        <Calendar className="w-4 h-4" />
+                                        <span>Joined {new Date(profileData?.memberSince || Date.now()).toLocaleDateString()}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Tabs */}
-                    <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+                        {/* Right Column: Edit Form */}
+                        <div className="md:col-span-2 space-y-6">
+                            <div className="bg-card/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
+                                <h3 className="text-lg font-semibold mb-6">Edit Profile</h3>
 
-                    {/* Content Area */}
-                    <div className="mt-6 min-h-[500px]">
-                        <AnimatePresence mode="wait">
-                            <motion.div
-                                key={activeTab}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                transition={{ duration: 0.2 }}
-                            >
-                                {activeTab === 'overview' && <OverviewTab profileData={profileData} />}
-                                {activeTab === 'watchlists' && user && <WatchlistTab userId={user.id} />}
-                                {activeTab === 'history' && user && <HistoryTab userId={user.id} />}
-                                {activeTab === 'reviews' && user && <ReviewsTab userId={user.id} />}
-                                {activeTab === 'preferences' && <PreferencesTab profileData={profileData} />}
-                                {activeTab === 'settings' && <SettingsTab profileData={profileData} />}
-                            </motion.div>
-                        </AnimatePresence>
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-muted-foreground">Display Name</label>
+                                        <input
+                                            type="text"
+                                            value={displayName}
+                                            onChange={(e) => setDisplayName(e.target.value)}
+                                            className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 focus:outline-none focus:border-primary transition-colors"
+                                            placeholder="Enter your display name"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-muted-foreground">Favorite Genres</label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {GENRES.map(genre => (
+                                                <button
+                                                    key={genre}
+                                                    onClick={() => handleGenreToggle(genre)}
+                                                    className={cn(
+                                                        "px-3 py-1 rounded-full text-sm border transition-all",
+                                                        selectedGenres.includes(genre)
+                                                            ? "bg-primary text-white border-primary"
+                                                            : "bg-transparent text-muted-foreground border-white/10 hover:border-white/30"
+                                                    )}
+                                                >
+                                                    {genre}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-4 flex justify-end">
+                                        <button
+                                            onClick={handleSave}
+                                            disabled={saving}
+                                            className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+                                        >
+                                            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
