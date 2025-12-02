@@ -315,6 +315,17 @@ router.post('/google', async (req, res) => {
                 password: crypto.randomBytes(16).toString('hex') // Random password for Google users
             });
             await user.save();
+
+            // Send Welcome Email
+            try {
+                await sendEmail({
+                    email: user.email,
+                    type: 'WELCOME',
+                    name: user.name
+                });
+            } catch (emailError) {
+                console.error('Welcome email failed for Google signup:', emailError);
+            }
         }
 
         // Generate Token
