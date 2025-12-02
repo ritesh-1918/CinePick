@@ -36,7 +36,7 @@ export default function Profile() {
     const [activeTab, setActiveTab] = useState('overview');
     const [loading, setLoading] = useState(true);
     const [profileData, setProfileData] = useState<ProfileData | null>(null);
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
 
     const links = [
         {
@@ -106,7 +106,7 @@ export default function Profile() {
 
     return (
         <div className={cn(
-            "rounded-md flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-800 w-full flex-1 max-w-7xl mx-auto border border-neutral-200 dark:border-neutral-700 overflow-hidden",
+            "flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-800 w-full flex-1 overflow-hidden",
             "h-screen"
         )}>
             <Sidebar open={open} setOpen={setOpen}>
@@ -133,7 +133,7 @@ export default function Profile() {
             </Sidebar>
 
             <div className="flex-1 flex flex-col overflow-y-auto bg-background text-white p-4 md:p-8">
-                <div className="max-w-5xl mx-auto w-full">
+                <div className="w-full">
                     {/* Profile Header */}
                     <div className="flex flex-col md:flex-row items-center gap-6 mb-8 p-6 bg-card/50 backdrop-blur-sm rounded-2xl border border-white/10">
                         <div className="relative group">

@@ -30,7 +30,7 @@ export default function Library() {
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState<'date' | 'title'>('date');
     const [isChatOpen, setIsChatOpen] = useState(false);
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
 
     const links = [
         {
@@ -167,7 +167,7 @@ export default function Library() {
 
     return (
         <div className={cn(
-            "rounded-md flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-800 w-full flex-1 max-w-7xl mx-auto border border-neutral-200 dark:border-neutral-700 overflow-hidden",
+            "flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-800 w-full flex-1 overflow-hidden",
             "h-screen"
         )}>
             <Sidebar open={open} setOpen={setOpen}>

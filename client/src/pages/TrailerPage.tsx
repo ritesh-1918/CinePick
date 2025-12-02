@@ -56,7 +56,7 @@ export default function TrailerPage() {
         <div className="min-h-screen bg-background text-white flex flex-col">
             {/* Header with Back Button */}
             <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-white/10 px-4 md:px-8 py-4">
-                <div className="flex items-center gap-4 max-w-7xl mx-auto">
+                <div className="flex items-center gap-4 w-full mx-auto">
                     <button
                         onClick={() => navigate(-1)}
                         className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors group"
@@ -75,7 +75,7 @@ export default function TrailerPage() {
 
             {/* Main Content - Centered Video */}
             <div className="flex-1 flex items-center justify-center p-4 md:p-8">
-                <div className="w-full max-w-5xl">
+                <div className="w-full">
                     {loading && (
                         <div className="flex flex-col items-center justify-center gap-4 py-20">
                             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>

@@ -24,7 +24,7 @@ export default function Discovery() {
     const [popular, setPopular] = useState<Movie[]>([]);
     const [nowPlaying, setNowPlaying] = useState<Movie[]>([]);
     const [loading, setLoading] = useState(true);
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(true);
 
 
 
@@ -154,7 +154,7 @@ export default function Discovery() {
 
     return (
         <div className={cn(
-            "rounded-md flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-800 w-full flex-1 max-w-7xl mx-auto border border-neutral-200 dark:border-neutral-700 overflow-hidden",
+            "flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-800 w-full flex-1 overflow-hidden",
             "h-screen"
         )}>
             <Sidebar open={open} setOpen={setOpen}>
