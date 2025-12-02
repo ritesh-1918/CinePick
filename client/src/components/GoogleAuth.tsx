@@ -55,9 +55,9 @@ export default function GoogleAuth() {
                 console.error("Google Login Failed:", data.message);
                 alert("Google Sign-In failed. Please try again.");
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Google Login Error:", error);
-            alert("Something went wrong with Google Sign-In.");
+            alert(`Google Sign-In Error: ${error.message || "Unknown error"}`);
         }
     };
 
