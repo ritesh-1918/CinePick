@@ -22,9 +22,11 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, 'uploads');
+const isProduction = process.env.NODE_ENV === 'production';
+const uploadsDir = isProduction ? path.join('/tmp', 'uploads') : path.join(__dirname, 'uploads');
+
 if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir);
+    fs.mkdirSync(uploadsDir, { recursive: true });
 }
 app.use('/uploads', express.static(uploadsDir));
 

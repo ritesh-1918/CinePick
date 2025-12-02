@@ -163,7 +163,8 @@ router.put('/:userId', auth, async (req, res) => {
 /** Multer avatar upload */
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadsDir = path.join(__dirname, '..', 'uploads');
+        const isProduction = process.env.NODE_ENV === 'production';
+        const uploadsDir = isProduction ? path.join('/tmp', 'uploads') : path.join(__dirname, '..', 'uploads');
         cb(null, uploadsDir);
     },
     filename: (req, file, cb) => cb(null, 'avatar-' + req.userId + path.extname(file.originalname))
