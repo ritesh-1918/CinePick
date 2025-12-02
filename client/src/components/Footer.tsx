@@ -31,6 +31,9 @@ export function Footer() {
 
                 <div>
                     <h4 className="font-semibold mb-4">Legal</h4>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                        <li><Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
+                        <li><Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link></li>
                     </ul>
                 </div>
 
@@ -53,6 +56,6 @@ export function Footer() {
             <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-border/40 text-center text-sm text-muted-foreground">
                 <p>&copy; {new Date().getFullYear()} CinePick. All rights reserved.</p>
             </div>
-        </footer >
+        </footer>
     );
 }
