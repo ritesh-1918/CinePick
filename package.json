@@ -36,6 +36,6 @@
     "react-hot-toast": "^2.6.0",
     "react-select": "^5.10.2",
     "recharts": "^3.5.0",
-    "uuid": "^13.0.0"
+    "uuid": "^9.0.1"
   }
 }
