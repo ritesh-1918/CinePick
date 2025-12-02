@@ -12,6 +12,32 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "uuid": "^9.0.1"
-}
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "axios": "^1.13.2",
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^1.41.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-validator": "^7.3.1",
+    "framer-motion": "^12.23.24",
+    "google-auth-library": "^10.5.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^9.0.0",
+    "multer": "^2.0.2",
+    "multer-storage-cloudinary": "^4.0.0",
+    "nodemailer": "^7.0.11",
+    "react-beautiful-dnd": "^13.1.1",
+    "react-calendar-heatmap": "^1.10.0",
+    "react-hot-toast": "^2.6.0",
+    "react-select": "^5.10.2",
+    "recharts": "^3.5.0",
+    "uuid": "^9.0.1"
+  }
 }
