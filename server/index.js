@@ -43,6 +43,10 @@ app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/session', require('./routes/session'));
 
+app.get('/api/health', (req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date() });
+});
+
 // Cache Store
 let newsCache = {
     data: null,
