@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Github, Twitter, Instagram } from 'lucide-react';
+import { Github, Instagram, Linkedin } from 'lucide-react';
 
 export function Footer() {
     return (
@@ -31,30 +31,24 @@ export function Footer() {
 
                 <div>
                     <h4 className="font-semibold mb-4">Legal</h4>
-                    <ul className="space-y-2 text-sm text-muted-foreground">
-                        <li><Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
-                        <li><Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link></li>
-                        <li><Link to="/cookies" className="hover:text-primary transition-colors">Cookie Policy</Link></li>
                     </ul>
                 </div>
 
                 <div>
                     <h4 className="font-semibold mb-4">Connect</h4>
-                    <div className="flex space-x-4">
-                        <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                            <Twitter size={20} />
+                    <div className="flex gap-4">
+                        <a href="https://instagram.com/ritesh_19180" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                            <Instagram size={20} />
                         </a>
-                        <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+                        <a href="https://github.com/ritesh-1918" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
                             <Github size={20} />
                         </a>
-                        <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                            <Instagram size={20} />
+                        <a href="https://linkedin.com/in/ritesh1908" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                            <Linkedin size={20} />
                         </a>
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-border/40 text-center text-sm text-muted-foreground">
                 <p>&copy; {new Date().getFullYear()} CinePick. All rights reserved.</p>

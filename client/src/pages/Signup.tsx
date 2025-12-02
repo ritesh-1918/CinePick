@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { AuthCarousel } from '@/components/AuthCarousel';
 import { useAuth } from '@/context/AuthContext';
 import GoogleAuth from '@/components/GoogleAuth';
@@ -8,6 +8,7 @@ import GoogleAuth from '@/components/GoogleAuth';
 export default function Signup() {
     const navigate = useNavigate();
     const { login } = useAuth();
+    const [showPassword, setShowPassword] = React.useState(false);
     const [formData, setFormData] = React.useState({
         firstName: '',
         lastName: '',
@@ -131,15 +132,24 @@ export default function Signup() {
 
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-muted-foreground" htmlFor="password">Password</label>
-                            <input
-                                type="password"
-                                id="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                className="w-full bg-background/50 border border-border/50 rounded-lg px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                                placeholder="••••••••"
-                                required
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    id="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    className="w-full bg-background/50 border border-border/50 rounded-lg px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all pr-10"
+                                    placeholder="••••••••"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
                         </div>
 
                         <button
