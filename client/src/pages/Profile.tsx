@@ -68,7 +68,8 @@ export default function Profile() {
         const fetchProfile = async () => {
             if (!user) return;
             try {
-                const res = await fetch(`/api/profile/${user.id}`, {
+                const apiUrl = import.meta.env.VITE_API_URL || '';
+                const res = await fetch(`${apiUrl}/api/profile/${user.id}`, {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
                 });
                 const data = await res.json();
@@ -101,7 +102,8 @@ export default function Profile() {
         if (!user) return;
         setSaving(true);
         try {
-            const res = await fetch(`/api/profile/${user.id}`, {
+            const apiUrl = import.meta.env.VITE_API_URL || '';
+            const res = await fetch(`${apiUrl}/api/profile/${user.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

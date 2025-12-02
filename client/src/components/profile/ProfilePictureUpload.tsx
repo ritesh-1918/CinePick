@@ -29,7 +29,8 @@ export default function ProfilePictureUpload({ currentImage, onImageUpdate }: Pr
         const toastId = toast.loading('Uploading profile picture...');
 
         try {
-            const res = await fetch('/api/profile/avatar', {
+            const apiUrl = import.meta.env.VITE_API_URL || '';
+            const res = await fetch(`${apiUrl}/api/profile/avatar`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
