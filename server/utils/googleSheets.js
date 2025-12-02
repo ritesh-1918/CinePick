@@ -1,17 +1,38 @@
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 const { JWT } = require('google-auth-library');
-const creds = require('../google-credentials.json');
+const fs = require('fs');
+const path = require('path');
 
-const serviceAccountAuth = new JWT({
+let creds;
+const credsPath = path.join(__dirname, '../google-credentials.json');
+
+if (fs.existsSync(credsPath)) {
+    creds = require(credsPath);
+} else if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+    try {
+        creds = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
+    } catch (e) {
+        console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON', e);
+    }
+} else {
+    console.warn('No Google Credentials found (file or env). Sheets integration will fail.');
+}
+
+const serviceAccountAuth = creds ? new JWT({
     email: creds.client_email,
     key: creds.private_key,
     scopes: [
         'https://www.googleapis.com/auth/spreadsheets',
     ],
-});
+}) : null;
 
 const appendToSheet = async (data) => {
     try {
+        if (!serviceAccountAuth) {
+            console.warn('Google Service Account not configured. Skipping sheet update.');
+            return;
+        }
+
         if (!process.env.GOOGLE_SHEET_ID) {
             console.warn('GOOGLE_SHEET_ID is not set. Skipping Google Sheet update.');
             return;
